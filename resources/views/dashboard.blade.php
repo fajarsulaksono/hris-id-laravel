@@ -19,7 +19,7 @@
                     <p>Karyawan</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-users"></i>
+                    <i class="bi bi-people"></i>
                 </div>
             </div>
         </div>
@@ -30,7 +30,7 @@
                     <p>Absensi Hari Ini</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-clock"></i>
+                    <i class="bi bi-clock-history"></i>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
                     <p>Overtime Bulan Ini</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-hourglass-half"></i>
+                    <i class="bi bi-hourglass-split"></i>
                 </div>
             </div>
         </div>
@@ -52,7 +52,7 @@
                     <p>Cuti Berlangsung</p>
                 </div>
                 <div class="icon">
-                    <i class="fas fa-plane"></i>
+                    <i class="bi bi-airplane"></i>
                 </div>
             </div>
         </div>
