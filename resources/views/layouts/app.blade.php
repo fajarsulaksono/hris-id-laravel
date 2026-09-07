@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/css/adminlte.min.css">
+    <!-- DataTables 2.x -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/css/dataTables.bootstrap5.min.css">
     <style>
         :root {
             --bs-body-font-family: "Outfit", sans-serif;
@@ -100,12 +102,14 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.master.holidays.index') }}" class="nav-link">
-                                    <i class="ti ti-circle nav-icon"></i>
-                                    <p>Hari Libur</p>
-                                </a>
-                            </li>
+                            @foreach (\App\Support\MasterModules::byMenu('master') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
                         </ul>
                     </li>
                     @endcan
@@ -120,12 +124,14 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="ti ti-circle nav-icon"></i>
-                                    <p>Struktur</p>
-                                </a>
-                            </li>
+                            @foreach (\App\Support\MasterModules::byMenu('company') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
                         </ul>
                     </li>
                     @endcan
@@ -241,6 +247,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/js/adminlte.min.js"></script>
+<!-- DataTables 2.x -->
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@2.3.8/js/dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ asset('js/hris-master.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

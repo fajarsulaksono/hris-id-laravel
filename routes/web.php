@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\MasterDataController;
+use App\Http\Controllers\Api\DependencyOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Admin\Master\HolidayController;
 use App\Http\Controllers\DashboardController;
+use App\Support\MasterModules;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -32,9 +34,31 @@ Route::middleware('auth')->group(function () {
             ->get('/', [DashboardController::class, 'index'])
             ->name('home');
 
-        // ---- Master ----
-        Route::middleware(['checkRole:master_menu', 'companyContext'])
-            ->resource('holidays', HolidayController::class)
-            ->names('master.holidays');
+        Route::get('api/options/{type}', [DependencyOptionsController::class, 'options'])
+            ->name('api.options');
+
+        foreach (MasterModules::all() as $key => $module) {
+            $menu = $module['menu'];
+            $role = MasterModules::menuRoles()[$menu];
+
+            Route::prefix("{$menu}/{$key}")
+                ->name("{$menu}.{$key}.")
+                ->middleware(['checkRole:'.$role, 'companyContext'])
+                ->group(function () use ($menu, $key) {
+                    $d = fn ($route) => $route->defaults('menuKey', $menu)->defaults('moduleKey', $key);
+
+                    $d(Route::get('/', [MasterDataController::class, 'index']))->name('index');
+                    $d(Route::get('/data', [MasterDataController::class, 'data']))->name('data');
+                    $d(Route::post('/', [MasterDataController::class, 'store']))->name('store');
+                    $d(Route::get('/create', [MasterDataController::class, 'create']))->name('create');
+                    $d(Route::get('/trash', [MasterDataController::class, 'trash']))->name('trash');
+                    $d(Route::get('/{id}', [MasterDataController::class, 'show']))->name('show');
+                    $d(Route::get('/{id}/edit', [MasterDataController::class, 'edit']))->name('edit');
+                    $d(Route::put('/{id}', [MasterDataController::class, 'update']))->name('update');
+                    $d(Route::delete('/{id}', [MasterDataController::class, 'destroy']))->name('destroy');
+                    $d(Route::post('/{id}/restore', [MasterDataController::class, 'restore']))->name('restore');
+                    $d(Route::delete('/{id}/permanent', [MasterDataController::class, 'forceDestroy']))->name('force-destroy');
+                });
+        }
     });
 });

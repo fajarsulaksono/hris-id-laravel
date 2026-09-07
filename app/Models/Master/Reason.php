@@ -34,4 +34,9 @@ class Reason extends Model
     {
         return $this->type->label();
     }
+
+    public function getTypeTextAttribute(): string
+    {
+        return $this->getTypeText();
+    }
 }

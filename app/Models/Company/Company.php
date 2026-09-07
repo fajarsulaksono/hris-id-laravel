@@ -72,4 +72,9 @@ class Company extends Model
     {
         return sprintf('%s - %s', $this->code, $this->name);
     }
+
+    public function getParentNameAttribute(): ?string
+    {
+        return $this->parent?->name;
+    }
 }

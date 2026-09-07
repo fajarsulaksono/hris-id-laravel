@@ -30,4 +30,14 @@ class City extends Model
     {
         return $this->belongsTo(Region::class);
     }
+
+    public function getRegionNameAttribute(): ?string
+    {
+        return $this->region?->name;
+    }
+
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s - %s', $this->code, $this->name);
+    }
 }

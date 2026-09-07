@@ -40,4 +40,9 @@ class SkillGroup extends Model
     {
         return $this->hasMany(Skill::class);
     }
+
+    public function getParentNameAttribute(): ?string
+    {
+        return $this->parent?->name;
+    }
 }

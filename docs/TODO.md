@@ -38,11 +38,11 @@ Simbol: `[x]` selesai, `[ ]` belum, `[-]` sebagian/sebagian besar selesai.
 ## Fase 1 — Master Data & Organisasi
 
 - [x] Model: `EducationalInstitute`, `EducationTitle`, `SkillGroup`, `Skill`, `Region`, `City`, `Holiday`, `Reason`, `Contract`, `Company`, `CompanyAddress`, `CompanyDepartment`, `Department`, `JobLevel`, `JobTitle`
-- [ ] Port validator: kontrak unik (`UniqueContract`), dependensi form kota↔provinsi, departemen↔perusahaan, jabatan↔level (JS/ajax dynamic select)
-- [-] Controller resource + view Blade AdminLTE grup menu "Master" & "Perusahaan" (contoh bekerja: **Hari Libur** → `admin.master.holidays`; modul lain menyusul)
-- [ ] DataTables 2.x (server-side) untuk list semua modul master
-- [ ] Seed master data (region/kota, job level/title, departemen, reason, dll.)
-- [ ] Restore/trash halaman (SoftDeletes + `deleted_by` Blameable)
+- [x] Port validator: kontrak unik (`app/Domain/Contract/CheckContract` + `app/Rules/UniqueContract`), dependensi form kota↔provinsi, departemen↔perusahaan, jabatan↔level (JS/ajax dynamic select → `GET /admin/api/options/{type}`)
+- [x] Controller resource + view Blade AdminLTE grup menu "Master" & "Perusahaan": `MasterDataController` generik berbasis registry `app/Support/MasterModules` (index/data/create/store/show/edit/update/destroy/trash/restore/force-destroy)
+- [x] DataTables 2.x (server-side) untuk list semua modul master (`app/Support/DataTableServer` + `public/js/hris-master.js` + CDN `datatables.net@2`)
+- [x] Seed master data idempotent (`MasterDataSeeder`): region/kota, job level/title, departemen, reason, kontrak, perusahaan+alamat+dept, pendidikan, keahlian, hari libur
+- [x] Restore/trash halaman (SoftDeletes + `deleted_by` Blameable)
 
 ## Fase 2 — Karyawan & Kontrak
 

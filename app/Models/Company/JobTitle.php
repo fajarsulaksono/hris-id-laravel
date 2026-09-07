@@ -41,4 +41,9 @@ class JobTitle extends Model
     {
         $this->attributes['name'] = StringUtil::uppercase($value);
     }
+
+    public function getJobLevelNameAttribute(): ?string
+    {
+        return $this->jobLevel?->name;
+    }
 }

@@ -34,4 +34,14 @@ class CompanyDepartment extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function getCompanyNameAttribute(): ?string
+    {
+        return $this->company?->name;
+    }
+
+    public function getDepartmentNameAttribute(): ?string
+    {
+        return $this->department?->name;
+    }
 }

@@ -29,4 +29,9 @@ class Skill extends Model
     {
         return $this->belongsTo(SkillGroup::class);
     }
+
+    public function getSkillGroupNameAttribute(): ?string
+    {
+        return $this->skillGroup?->name;
+    }
 }

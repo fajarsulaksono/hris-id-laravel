@@ -51,4 +51,19 @@ class CompanyAddress extends Model
     {
         return $this->belongsTo(City::class);
     }
+
+    public function getCompanyNameAttribute(): ?string
+    {
+        return $this->company?->name;
+    }
+
+    public function getRegionNameAttribute(): ?string
+    {
+        return $this->region?->name;
+    }
+
+    public function getCityNameAttribute(): ?string
+    {
+        return $this->city?->name;
+    }
 }

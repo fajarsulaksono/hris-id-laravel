@@ -52,4 +52,9 @@ class JobLevel extends Model
     {
         $this->attributes['name'] = StringUtil::uppercase($value);
     }
+
+    public function getParentNameAttribute(): ?string
+    {
+        return $this->parent?->name;
+    }
 }

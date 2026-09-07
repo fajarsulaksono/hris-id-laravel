@@ -118,4 +118,14 @@ return [
         'minus_code' => env('HRIS_TAX_MINUS_CODE', 'PPH21M'),
     ],
 
+    // Model yang bisa "memakai" sebuah kontrak. Pakai layanan CheckContract /
+    // aturan UniqueContract untuk memastikan satu kontrak hanya dipakai satu entitas.
+    'contractables' => [
+        \App\Models\Employee\Employee::class,
+        \App\Models\Employee\Placement::class,
+        \App\Models\Employee\CareerHistory::class,
+        \App\Models\Employee\Mutation::class,
+        \App\Models\Payroll\SalaryBenefitHistory::class,
+    ],
+
 ];

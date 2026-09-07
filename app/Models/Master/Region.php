@@ -29,4 +29,9 @@ class Region extends Model
     {
         return $this->hasMany(City::class);
     }
+
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s - %s', $this->code, $this->name);
+    }
 }
