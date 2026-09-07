@@ -17,6 +17,7 @@ use App\Models\Master\Contract;
 use App\Models\Master\Region;
 use App\Support\Concerns\Blameable;
 use App\Support\StringUtil;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +33,7 @@ class Employee extends Authenticatable
     use Blameable;
     use HasRoles;
     use Notifiable;
+    use CanResetPassword;
 
     public const DEFAULT_ROLE = 'ROLE_EMPLOYEE';
 

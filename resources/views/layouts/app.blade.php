@@ -12,10 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
     <!-- Bootstrap 5.3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/css/bootstrap.min.css">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11/bootstrap-icons.min.css">
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/css/fontawesome-free/css/all.min.css">
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.46.0/dist/tabler-icons.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/css/adminlte.min.css">
     <style>
@@ -43,14 +41,14 @@
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                        <i class="bi bi-list"></i>
+                        <i class="ti ti-menu-2"></i>
                     </a>
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-bs-toggle="dropdown" href="#">
-                        <i class="bi bi-person-circle"></i>
+                        <i class="ti ti-user-circle"></i>
                     </a>
                     <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                         <span class="dropdown-header">{{ auth()->user()->full_name }}</span>
@@ -58,7 +56,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="dropdown-item">
-                                <i class="bi bi-box-arrow-right me-2"></i> Keluar
+                                <i class="ti ti-logout me-2"></i> Keluar
                             </button>
                         </form>
                     </div>
@@ -87,7 +85,7 @@
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
                     <li class="nav-item">
                         <a href="{{ route('dashboard') }}" class="nav-link">
-                            <i class="nav-icon bi bi-speedometer"></i>
+                            <i class="nav-icon ti ti-dashboard"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
@@ -95,16 +93,16 @@
                     @can('view_employee')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
-                            <i class="nav-icon bi bi-people"></i>
+                            <i class="nav-icon ti ti-users"></i>
                             <p>
                                 Karyawan
-                                <i class="right bi bi-chevron-left"></i>
+                                <i class="right ti ti-chevron-left"></i>
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="#" class="nav-link">
-                                    <i class="far fa-circle nav-icon"></i>
+                                    <i class="ti ti-circle nav-icon"></i>
                                     <p>Daftar Karyawan</p>
                                 </a>
                             </li>
@@ -115,7 +113,7 @@
                     @can('view_attendance')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
-                            <i class="nav-icon bi bi-clock-history"></i>
+                            <i class="nav-icon ti ti-clock-hour-4"></i>
                             <p>Absensi</p>
                         </a>
                     </li>
@@ -124,7 +122,7 @@
                     @can('view_payroll')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
-                            <i class="nav-icon bi bi-wallet"></i>
+                            <i class="nav-icon ti ti-wallet"></i>
                             <p>Payroll</p>
                         </a>
                     </li>
