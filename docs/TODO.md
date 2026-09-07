@@ -31,15 +31,15 @@ Simbol: `[x]` selesai, `[ ]` belum, `[-]` sebagian/sebagian besar selesai.
 - [x] Auth: user = `Employee`, guard Eloquent, `LoginController` (login/logout), dashboard + routes
 - [x] Layout AdminLTE 4 + Bootstrap 5.3 + font Outfit, login page, dashboard stat cards
 - [x] Feature test minimal (guest redirect, login page render)
-- [ ] Base Controller & pola Blade CRUD umum (index/create/edit/show) untuk reuse semua modul
-- [ ] Middleware: `checkRole:min_ranking` (menu), `setCompanyContext`, `setEmployeeContext` (session sticky)
-- [ ] `Gate::before` hierarchy role (urutan 8 role) sesuai §8 refactor doc
+- [x] Base Controller & pola Blade CRUD umum (index/create/edit/show) untuk reuse semua modul (`BaseController` + partials: `card`, `crud/*`)
+- [x] Middleware: `checkRole:min_ranking` (menu), `setCompanyContext`, `setEmployeeContext` (session sticky)
+- [x] `Gate::before` hierarchy role (urutan 8 role) sesuai §8 refactor doc (`config/hris.role_ranks` + `App\Support\Security`)
 
 ## Fase 1 — Master Data & Organisasi
 
 - [x] Model: `EducationalInstitute`, `EducationTitle`, `SkillGroup`, `Skill`, `Region`, `City`, `Holiday`, `Reason`, `Contract`, `Company`, `CompanyAddress`, `CompanyDepartment`, `Department`, `JobLevel`, `JobTitle`
 - [ ] Port validator: kontrak unik (`UniqueContract`), dependensi form kota↔provinsi, departemen↔perusahaan, jabatan↔level (JS/ajax dynamic select)
-- [ ] Controller resource + view Blade AdminLTE grup menu "Master" & "Perusahaan"
+- [-] Controller resource + view Blade AdminLTE grup menu "Master" & "Perusahaan" (contoh bekerja: **Hari Libur** → `admin.master.holidays`; modul lain menyusul)
 - [ ] DataTables 2.x (server-side) untuk list semua modul master
 - [ ] Seed master data (region/kota, job level/title, departemen, reason, dll.)
 - [ ] Restore/trash halaman (SoftDeletes + `deleted_by` Blameable)

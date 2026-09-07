@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Admin\Master\HolidayController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('admin')->name('admin.')->middleware('employeeContext')->group(function () {
+        Route::middleware('checkRole:EMPLOYEE')
+            ->get('/', [DashboardController::class, 'index'])
+            ->name('home');
+
+        // ---- Master ----
+        Route::middleware(['checkRole:master_menu', 'companyContext'])
+            ->resource('holidays', HolidayController::class)
+            ->names('master.holidays');
+    });
 });

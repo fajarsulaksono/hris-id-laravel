@@ -90,6 +90,46 @@
                         </a>
                     </li>
 
+                    @can('view_master')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-database"></i>
+                            <p>
+                                Master
+                                <i class="right ti ti-chevron-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('admin.master.holidays.index') }}" class="nav-link">
+                                    <i class="ti ti-circle nav-icon"></i>
+                                    <p>Hari Libur</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endcan
+
+                    @can('view_company')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-building"></i>
+                            <p>
+                                Perusahaan
+                                <i class="right ti ti-chevron-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="#" class="nav-link">
+                                    <i class="ti ti-circle nav-icon"></i>
+                                    <p>Struktur</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endcan
+
                     @can('view_employee')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
@@ -110,6 +150,15 @@
                     </li>
                     @endcan
 
+                    @can('view_address')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-map-pin"></i>
+                            <p>Alamat</p>
+                        </a>
+                    </li>
+                    @endcan
+
                     @can('view_attendance')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
@@ -119,11 +168,47 @@
                     </li>
                     @endcan
 
+                    @can('view_overtime')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-clock-bolt"></i>
+                            <p>Lembur</p>
+                        </a>
+                    </li>
+                    @endcan
+
+                    @can('view_leave')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-plane"></i>
+                            <p>Cuti</p>
+                        </a>
+                    </li>
+                    @endcan
+
                     @can('view_payroll')
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon ti ti-wallet"></i>
-                            <p>Payroll</p>
+                            <p>Penggajian</p>
+                        </a>
+                    </li>
+                    @endcan
+
+                    @can('view_user')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-user-shield"></i>
+                            <p>Manajemen User</p>
+                        </a>
+                    </li>
+                    @endcan
+
+                    @can('view_config')
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="nav-icon ti ti-settings"></i>
+                            <p>Konfigurasi</p>
                         </a>
                     </li>
                     @endcan
