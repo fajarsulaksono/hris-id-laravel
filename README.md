@@ -16,6 +16,7 @@ A Laravel 12 port of the [SemartHris](https://github.com/SemartHris) (Symfony 6.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Project Structure](#project-structure)
+- [Customization & Support](#customization--support)
 - [License](#license)
 
 ## Screenshots (per role)
@@ -295,6 +296,13 @@ php artisan serve
 - `app/Support/Concerns/` – reusable model traits (e.g., `Blameable`)
 - `config/hris.php` – HRIS application settings (format, security, bpjs, tax, attendance, overtime)
 - `docs/screenshots/<role>/` – UI screenshots per role (used in this README)
+
+## Customization & Support
+
+For customization, implementation, or consultation, feel free to reach out:
+
+- Email: fajar.sulaksono@gmail.com
+- Telegram: fajarsulaksono
 
 ## License
 
