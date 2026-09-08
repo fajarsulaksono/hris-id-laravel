@@ -2,9 +2,9 @@
 
 namespace App\Models\Payroll;
 
+use App\Domain\Encryptor\SalaryCast;
 use App\Models\Employee\Employee;
 use App\Support\Concerns\Blameable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +27,10 @@ class SalaryBenefit extends Model
         'component_id',
         'benefit_value',
         'benefit_key',
+    ];
+
+    protected $casts = [
+        'benefit_value' => SalaryCast::class
     ];
 
     public function employee(): BelongsTo

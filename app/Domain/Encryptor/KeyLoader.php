@@ -11,15 +11,33 @@ class KeyLoader
     ) {
     }
 
-    public function getPrivateKey(string $passphrase = null): \OpenSSLAsymmetricKey|false
+    public function getPrivateKey(?string $passphrase = null): \OpenSSLAsymmetricKey|false
     {
-        $key = openssl_pkey_get_private($this->privateKeyPath, $passphrase ?? $this->passphrase);
-
-        return $key;
+        return openssl_pkey_get_private($this->getKey($this->privateKeyPath), $passphrase ?? $this->passphrase);
     }
 
     public function getPublicKey(): \OpenSSLAsymmetricKey|false
     {
-        return openssl_pkey_get_public($this->publicKeyPath);
+        return openssl_pkey_get_public($this->getKey($this->publicKeyPath));
+    }
+
+    private function validate(string $path): void
+    {
+        if (! is_file($path) || ! is_readable($path)) {
+            throw new \RuntimeException(sprintf('%s does not exist or is not readable', $path));
+        }
+    }
+
+    private function getKey(string $path): string
+    {
+        $this->validate($path);
+
+        $contents = file_get_contents($path);
+
+        if ($contents === false) {
+            throw new \RuntimeException(sprintf('%s cannot be read', $path));
+        }
+
+        return $contents;
     }
 }

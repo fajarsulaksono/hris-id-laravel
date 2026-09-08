@@ -2,6 +2,8 @@
 
 namespace App\Models\Tax;
 
+use App\Enums\RiskRatio;
+use App\Enums\TaxGroup;
 use App\Models\Employee\Employee;
 use App\Support\Concerns\Blameable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -27,6 +29,13 @@ class TaxGroupHistory extends Model
         'new_tax_group',
         'old_risk_ratio',
         'new_risk_ratio',
+    ];
+
+    protected $casts = [
+        'old_tax_group' => TaxGroup::class,
+        'new_tax_group' => TaxGroup::class,
+        'old_risk_ratio' => RiskRatio::class,
+        'new_risk_ratio' => RiskRatio::class,
     ];
 
     public function employee(): BelongsTo

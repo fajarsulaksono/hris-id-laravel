@@ -10,11 +10,30 @@ use App\Domain\Attendance\HolidayChecker;
 use App\Domain\Attendance\RuleInterface;
 use App\Domain\Attendance\WorkdayCalculator;
 use App\Domain\Attendance\WorkshiftFinder;
+use App\Domain\Encryptor\Encryptor;
+use App\Domain\Encryptor\KeyLoader;
 use App\Domain\Overtime\OvertimeCalculator;
 use App\Domain\Overtime\OvertimeCalculatorInterface;
 use App\Domain\Overtime\OvertimeCalculatorService;
 use App\Domain\Overtime\OvertimeChecker;
 use App\Domain\Overtime\OvertimeProcessor;
+use App\Domain\Salary\PayrollProcessorInterface;
+use App\Domain\Salary\Processor\AttendanceProcessor as SalaryAttendanceProcessor;
+use App\Domain\Salary\Processor\BpjsProcessor as SalaryBpjsProcessor;
+use App\Domain\Salary\Processor\OvertimeProcessor as SalaryOvertimeProcessor;
+use App\Domain\Salary\Processor\PayrollProcessor as ChainPayrollProcessor;
+use App\Domain\Salary\Processor\SalaryProcessor as PayrollSalaryProcessor;
+use App\Domain\Salary\Service\ChangeBenefit;
+use App\Domain\Salary\Service\PayrollProcessor as SalaryPayrollProcessor;
+use App\Domain\Salary\Service\StoreAsCompanyCost;
+use App\Domain\Salary\Service\ValidateBenefit;
+use App\Domain\Tax\FirstRateTaxCalculator;
+use App\Domain\Tax\FourthRateTaxCalculator;
+use App\Domain\Tax\Processor\TaxProcessor as SalaryTaxProcessor;
+use App\Domain\Tax\Processor\TaxProcessorInterface;
+use App\Domain\Tax\SecondRateTaxCalculator;
+use App\Domain\Tax\Service\TaxProcessor as TaxProcessorService;
+use App\Domain\Tax\ThirdRateTaxCalculator;
 use App\Models\Attendance\Attendance;
 use App\Models\Attendance\Leave;
 use App\Models\Attendance\Overtime;
@@ -23,6 +42,8 @@ use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeAddress;
 use App\Models\Employee\Mutation;
 use App\Models\Employee\Placement;
+use App\Models\Payroll\SalaryBenefitHistory;
+use App\Models\Tax\TaxGroupHistory;
 use App\Observers\AttendanceObserver;
 use App\Observers\EmployeeAddressObserver;
 use App\Observers\EmployeeObserver;
@@ -30,6 +51,8 @@ use App\Observers\LeaveObserver;
 use App\Observers\MutationObserver;
 use App\Observers\OvertimeObserver;
 use App\Observers\PlacementObserver;
+use App\Observers\SalaryBenefitHistoryObserver;
+use App\Observers\TaxGroupHistoryObserver;
 use App\Observers\WorkshiftObserver;
 use App\Policies\EmployeePolicy;
 use App\Support\Security;
@@ -45,6 +68,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Security::class);
+
+        $this->app->singleton(KeyLoader::class, fn () => new KeyLoader(
+            (string) base_path(config('hris.encryption.private_key_path')),
+            (string) base_path(config('hris.encryption.public_key_path')),
+            (string) config('hris.encryption.passphrase'),
+        ));
+
+        $this->app->singleton(Encryptor::class, fn () => new Encryptor(app(KeyLoader::class)));
 
         $this->app->singleton(HolidayChecker::class, fn () => new HolidayChecker(implode(',', (array) config('hris.offday_per_week'))));
 
@@ -88,6 +119,66 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(OvertimeProcessor::class, fn () => new OvertimeProcessor(
             (int) config('hris.attendance.cut_off_date'),
         ));
+
+        $this->app->singleton(StoreAsCompanyCost::class);
+        $this->app->singleton(ChangeBenefit::class);
+        $this->app->singleton(ValidateBenefit::class);
+
+        $this->app->singleton(SalaryOvertimeProcessor::class, fn () => new SalaryOvertimeProcessor(
+            app(StoreAsCompanyCost::class),
+            (string) config('hris.overtime.benefit_code'),
+        ));
+
+        $this->app->singleton(SalaryBpjsProcessor::class, fn () => new SalaryBpjsProcessor(
+            app(StoreAsCompanyCost::class),
+            (string) config('hris.bpjs.jkk_code'),
+            (string) config('hris.bpjs.jkm_code'),
+            (string) config('hris.bpjs.jht_plus_code'),
+            (string) config('hris.bpjs.jht_minus_code'),
+            (string) config('hris.bpjs.jht_company_code'),
+            (string) config('hris.bpjs.jp_plus_code'),
+            (string) config('hris.bpjs.jp_minus_code'),
+            (string) config('hris.bpjs.jp_company_code'),
+        ));
+
+        $this->app->singleton(PayrollSalaryProcessor::class, fn () => new PayrollSalaryProcessor(
+            app(StoreAsCompanyCost::class),
+            [
+                app(SalaryOvertimeProcessor::class),
+                app(SalaryBpjsProcessor::class),
+            ],
+        ));
+
+        $this->app->singleton(SalaryAttendanceProcessor::class, fn () => new SalaryAttendanceProcessor(
+            app(AttendanceSummaryCalculator::class),
+        ));
+
+        $this->app->singleton(ChainPayrollProcessor::class, fn () => new ChainPayrollProcessor([
+            app(SalaryAttendanceProcessor::class),
+            app(PayrollSalaryProcessor::class),
+        ]));
+
+        $this->app->bind(PayrollProcessorInterface::class, ChainPayrollProcessor::class);
+
+        $this->app->singleton(SalaryPayrollProcessor::class, fn () => new SalaryPayrollProcessor(
+            app(PayrollProcessorInterface::class),
+        ));
+
+        $this->app->singleton(SalaryTaxProcessor::class, fn () => new SalaryTaxProcessor([
+            new FirstRateTaxCalculator(),
+            new SecondRateTaxCalculator(),
+            new ThirdRateTaxCalculator(),
+            new FourthRateTaxCalculator(),
+        ]));
+
+        $this->app->bind(TaxProcessorInterface::class, SalaryTaxProcessor::class);
+
+        $this->app->singleton(TaxProcessorService::class, fn () => new TaxProcessorService(
+            app(TaxProcessorInterface::class),
+            app(StoreAsCompanyCost::class),
+            (string) config('hris.tax.plus_code'),
+            (string) config('hris.tax.minus_code'),
+        ));
     }
 
     /**
@@ -103,6 +194,8 @@ class AppServiceProvider extends ServiceProvider
         Overtime::observe(OvertimeObserver::class);
         Workshift::observe(WorkshiftObserver::class);
         Leave::observe(LeaveObserver::class);
+        SalaryBenefitHistory::observe(SalaryBenefitHistoryObserver::class);
+        TaxGroupHistory::observe(TaxGroupHistoryObserver::class);
 
         Gate::policy(Employee::class, EmployeePolicy::class);
 

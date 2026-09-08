@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             DemoUserSeeder::class,
             MasterDataSeeder::class,
+            SalaryComponentSeeder::class,
         ]);
     }
 }

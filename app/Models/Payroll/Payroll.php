@@ -2,6 +2,7 @@
 
 namespace App\Models\Payroll;
 
+use App\Domain\Encryptor\SalaryCast;
 use App\Models\Employee\Employee;
 use App\Support\Concerns\Blameable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -27,6 +28,10 @@ class Payroll extends Model
         'period_id',
         'take_home_pay',
         'take_home_pay_key',
+    ];
+
+    protected $casts = [
+        'take_home_pay' => SalaryCast::class
     ];
 
     public function employee(): BelongsTo

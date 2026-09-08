@@ -2,6 +2,7 @@
 
 namespace App\Models\Payroll;
 
+use App\Domain\Encryptor\SalaryCast;
 use App\Models\Employee\Employee;
 use App\Models\Master\Contract;
 use App\Support\Concerns\Blameable;
@@ -30,6 +31,11 @@ class SalaryBenefitHistory extends Model
         'old_benefit_value',
         'benefit_key',
         'description',
+    ];
+
+    protected $casts = [
+        'new_benefit_value' => SalaryCast::class,
+        'old_benefit_value' => SalaryCast::class,
     ];
 
     public function employee(): BelongsTo

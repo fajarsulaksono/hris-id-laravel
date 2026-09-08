@@ -2,6 +2,7 @@
 
 namespace App\Models\Payroll;
 
+use App\Domain\Encryptor\SalaryCast;
 use App\Models\Employee\Employee;
 use App\Support\Concerns\Blameable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -33,6 +34,7 @@ class SalaryAllowance extends Model
     protected $casts = [
         'year' => 'integer',
         'month' => 'integer',
+        'benefit_value' => SalaryCast::class,
     ];
 
     public function employee(): BelongsTo

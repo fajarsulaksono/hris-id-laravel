@@ -2,6 +2,7 @@
 
 namespace App\Models\Tax;
 
+use App\Domain\Encryptor\SalaryCast;
 use App\Enums\TaxGroup;
 use App\Models\Employee\Employee;
 use App\Models\Payroll\PayrollPeriod;
@@ -35,6 +36,9 @@ class Tax extends Model
 
     protected $casts = [
         'tax_group' => TaxGroup::class,
+        'untaxable' => SalaryCast::class,
+        'taxable' => SalaryCast::class,
+        'tax_value' => SalaryCast::class,
     ];
 
     public function period(): BelongsTo
