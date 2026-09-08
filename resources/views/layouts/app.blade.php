@@ -20,25 +20,64 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/css/dataTables.bootstrap5.min.css">
     <style>
         :root {
+            font-size: 15px;
             --bs-body-font-family: "Outfit", sans-serif;
             --bs-font-sans-serif: "Outfit", sans-serif;
+            --bs-midnight: #151a2d;
+            --bs-orange: #fd7e14;
+        }
+        .text-bg-midnight {
+            color: #fff !important;
+            background-color: var(--bs-midnight) !important;
+        }
+        .text-bg-orange {
+            color: #fff !important;
+            background-color: var(--bs-orange) !important;
         }
         body {
             font-family: "Outfit", sans-serif;
         }
+        .sidebar-menu .nav-icon {
+            font-size: 1.4rem;
+            min-width: 1.4rem;
+            max-width: 1.4rem;
+        }
+        .app-header .navbar-nav .ti {
+            font-size: 1.4rem;
+        }
+        .sidebar-overlay {
+            display: none !important;
+        }
+        .app-sidebar .sidebar-brand {
+            border-bottom: none;
+            background-color: #b45309;
+        }
+        .app-sidebar .sidebar-brand .brand-image {
+            display: none;
+        }
+        .app-sidebar .sidebar-brand .brand-text-short {
+            display: none;
+            visibility: hidden;
+        }
+        .sidebar-mini.sidebar-collapse .app-sidebar .sidebar-brand .brand-text-short {
+            display: block;
+            visibility: visible;
+            color: #fff;
+        }
+        .sidebar-mini.sidebar-collapse .app-sidebar .sidebar-brand .brand-image {
+            display: none !important;
+        }
+        .sidebar-mini.sidebar-collapse:not(.sidebar-without-hover) .app-sidebar:hover .sidebar-brand .brand-image {
+            display: none;
+        }
     </style>
     @stack('styles')
 </head>
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg sidebar-mini bg-body-tertiary">
 <div class="app-wrapper">
 
-    <!-- Preloader -->
-    <div class="preloader flex-column justify-content-center align-items-center">
-        <img class="animation__shake" src="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/img/AdminLTELogo.png" alt="AdminLTELogo" height="60" width="60">
-    </div>
-
     <!-- Navbar -->
-    <nav class="app-header navbar navbar-expand bg-body">
+    <nav class="app-header navbar navbar-expand text-bg-midnight" data-bs-theme="dark">
         <div class="container-fluid">
             <ul class="navbar-nav">
                 <li class="nav-item">
@@ -48,43 +87,79 @@
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-lte-toggle="fullscreen" role="button" aria-label="Toggle fullscreen">
+                        <i data-lte-icon="maximize" class="ti ti-arrows-maximize"></i>
+                        <i data-lte-icon="minimize" class="ti ti-arrows-minimize d-none"></i>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="theme-toggle" role="button" aria-label="Toggle theme">
+                        <i id="theme-icon-light" class="ti ti-moon"></i>
+                        <i id="theme-icon-dark" class="ti ti-sun d-none"></i>
+                    </a>
+                </li>
+                <li class="nav-item dropdown user-menu">
                     <a class="nav-link" data-bs-toggle="dropdown" href="#">
                         <i class="ti ti-user-circle"></i>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                        <span class="dropdown-header">{{ auth()->user()->full_name }}</span>
-                        <div class="dropdown-divider"></div>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="dropdown-item">
-                                <i class="ti ti-logout me-2"></i> Keluar
-                            </button>
-                        </form>
-                    </div>
+                    <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                        <li class="user-header text-bg-primary">
+                            <i class="ti ti-user-circle" style="font-size: 5.5rem; line-height: 1.2;"></i>
+                            <p>
+                                {{ auth()->user()->full_name }}
+                                <small>Member since {{ auth()->user()->created_at?->format('M. Y') }}</small>
+                            </p>
+                        </li>
+                        <li class="user-body">
+                            <div class="row">
+                                <div class="col-4 text-center">
+                                    <a href="#">Follow</a>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <a href="#">Sales</a>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <a href="#">Friends</a>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="user-footer">
+                            <a href="#" class="btn btn-outline-secondary">Profile</a>
+                            <form method="POST" action="{{ route('logout') }}" class="d-inline float-end">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="ti ti-logout me-1"></i> Keluar
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>
     </nav>
 
     <!-- Main Sidebar -->
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+    <aside class="app-sidebar text-bg-midnight shadow" data-bs-theme="dark">
         <div class="sidebar-brand">
             <a href="{{ route('dashboard') }}" class="brand-link">
-                <img src="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/img/AdminLTELogo.png" alt="HRIS Logo" class="brand-image opacity-75 shadow">
-                <span class="brand-text fw-light">HRIS Indonesia</span>
+                <img src="{{ asset('images/hris-logo.svg') }}" alt="HRIS Logo" class="brand-image opacity-75 shadow">
+                <span class="brand-text fw-bold fst-italic">HRIS Indonesia</span>
+                <span class="brand-text-short fw-bold fst-italic">HRIS</span>
             </a>
         </div>
 
-        <div class="sidebar-wrapper">
-            <div class="pt-3 pb-3 d-flex">
-                <div class="info">
-                    <a href="#" class="d-block">{{ auth()->user()->full_name }}</a>
-                </div>
-            </div>
+        <div class="sidebar-search" role="search">
+            <label for="sidebar-search-input" class="visually-hidden">Filter menu</label>
+            <input type="search" id="sidebar-search-input" class="form-control form-control-sm" placeholder="Filter menu…" autocomplete="off" data-lte-toggle="sidebar-search" data-lte-target="#navigation">
+            <p class="fs-7 text-secondary mt-2 mb-0" data-lte-search-empty="" role="status" hidden>
+                No matching pages.
+            </p>
+        </div>
 
+        <div class="sidebar-wrapper">
             <nav class="mt-2">
-                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
+                <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false" id="navigation">
                     <li class="nav-item">
                         <a href="{{ route('dashboard') }}" class="nav-link">
                             <i class="nav-icon ti ti-dashboard"></i>
@@ -98,7 +173,7 @@
                             <i class="nav-icon ti ti-database"></i>
                             <p>
                                 Master
-                                <i class="right ti ti-chevron-left"></i>
+                                <i class="nav-arrow ti ti-chevron-right"></i>
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
@@ -120,7 +195,7 @@
                             <i class="nav-icon ti ti-building"></i>
                             <p>
                                 Perusahaan
-                                <i class="right ti ti-chevron-left"></i>
+                                <i class="nav-arrow ti ti-chevron-right"></i>
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
@@ -142,7 +217,7 @@
                             <i class="nav-icon ti ti-users"></i>
                             <p>
                                 Karyawan
-                                <i class="right ti ti-chevron-left"></i>
+                                <i class="nav-arrow ti ti-chevron-right"></i>
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
@@ -251,6 +326,44 @@
 <script src="https://cdn.jsdelivr.net/npm/datatables.net@2.3.8/js/dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="{{ asset('js/hris-master.js') }}"></script>
+<script>
+    (function () {
+        const root = document.documentElement;
+        const storageKey = 'lte-theme';
+        const iconLight = document.getElementById('theme-icon-light');
+        const iconDark = document.getElementById('theme-icon-dark');
+
+        function applyTheme(theme) {
+            const resolved = theme === 'dark' ? 'dark' : 'light';
+            root.setAttribute('data-bs-theme', resolved);
+            root.style.colorScheme = resolved;
+            iconLight.classList.toggle('d-none', resolved === 'dark');
+            iconDark.classList.toggle('d-none', resolved === 'light');
+        }
+
+        let stored = null;
+        try {
+            stored = localStorage.getItem(storageKey);
+        } catch (e) {}
+
+        const authored = root.getAttribute('data-bs-theme');
+        let initial = stored;
+        if (initial !== 'dark' && initial !== 'light') {
+            initial = (authored === 'dark' || authored === 'light') ? authored
+                : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        }
+        applyTheme(initial);
+
+        document.getElementById('theme-toggle').addEventListener('click', function (e) {
+            e.preventDefault();
+            const next = root.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+            try {
+                localStorage.setItem(storageKey, next);
+            } catch (err) {}
+        });
+    })();
+</script>
 @stack('scripts')
 </body>
 </html>
