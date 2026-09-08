@@ -85,6 +85,8 @@ class MasterDataController extends BaseController
         $data = $this->transform($module, $data);
         $data = $this->withoutMediaFields($module, $data);
 
+        $this->assertModuleValid($module, $request, $data, null);
+
         $model = ($module['model'])::create($data);
 
         $this->handleMediaFields($module, $request, $model);
@@ -125,7 +127,12 @@ class MasterDataController extends BaseController
 
         $model = $this->resolve($module, $id);
 
-        $model->update($this->withoutMediaFields($module, $this->transform($module, $this->validated($module, $request, $model))));
+        $data = $this->transform($module, $this->validated($module, $request, $model));
+        $data = $this->withoutMediaFields($module, $data);
+
+        $this->assertModuleValid($module, $request, $data, $model);
+
+        $model->update($data);
 
         $this->handleMediaFields($module, $request, $model);
 
@@ -216,6 +223,21 @@ class MasterDataController extends BaseController
     protected function validated(array $module, Request $request, ?Model $model): array
     {
         return $request->validate($this->rules($module, $model));
+    }
+
+    /**
+     * Jalankan validasi lintas-field khusus domain untuk modul yang
+     * mendaftarkan validator (port ValidAttendanceValidator pada CRUD).
+     */
+    protected function assertModuleValid(array $module, Request $request, array $data, ?Model $model): void
+    {
+        $validator = $module['validator'] ?? null;
+
+        if (! is_callable($validator)) {
+            return;
+        }
+
+        $validator($request, $data, $model);
     }
 
     protected function rules(array $module, ?Model $model): array

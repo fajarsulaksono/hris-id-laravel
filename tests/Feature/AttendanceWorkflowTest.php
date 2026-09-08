@@ -118,6 +118,77 @@ class AttendanceWorkflowTest extends TestCase
             ->assertOk();
     }
 
+    public function test_attendance_crud_rejects_present_row_without_times(): void
+    {
+        $staff = $this->staff();
+        $employee = Employee::where('username', 'sari.wulandari')->first();
+
+        $this->actingAs($staff)
+            ->post(route('admin.attendance.attendances.store'), [
+                'employee_id' => $employee->getKey(),
+                'attendance_date' => '2026-01-05',
+                'absent' => '0',
+            ])
+            ->assertSessionHasErrors(['check_in', 'check_out']);
+
+        $this->assertDatabaseMissing('attendances', [
+            'employee_id' => $employee->getKey(),
+            'attendance_date' => '2026-01-05',
+        ]);
+    }
+
+    public function test_attendance_crud_rejects_absent_row_without_reason(): void
+    {
+        $staff = $this->staff();
+        $employee = Employee::where('username', 'sari.wulandari')->first();
+
+        $this->actingAs($staff)
+            ->post(route('admin.attendance.attendances.store'), [
+                'employee_id' => $employee->getKey(),
+                'attendance_date' => '2026-01-05',
+                'absent' => '1',
+            ])
+            ->assertSessionHasErrors('reason_id');
+
+        $this->assertDatabaseMissing('attendances', [
+            'employee_id' => $employee->getKey(),
+            'attendance_date' => '2026-01-05',
+        ]);
+    }
+
+    public function test_attendance_crud_accepts_valid_rows(): void
+    {
+        $staff = $this->staff();
+        $employee = Employee::where('username', 'sari.wulandari')->first();
+
+        $reason = Reason::create([
+            'type' => ReasonType::ABSENT,
+            'code' => 'CT',
+            'name' => 'CUTI',
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('admin.attendance.attendances.store'), [
+                'employee_id' => $employee->getKey(),
+                'attendance_date' => '2026-01-05',
+                'check_in' => '08:00',
+                'check_out' => '17:00',
+                'absent' => '0',
+            ])
+            ->assertRedirect(route('admin.attendance.attendances.index'));
+
+        $this->actingAs($staff)
+            ->post(route('admin.attendance.attendances.store'), [
+                'employee_id' => $employee->getKey(),
+                'attendance_date' => '2026-01-06',
+                'absent' => '1',
+                'reason_id' => $reason->getKey(),
+            ])
+            ->assertRedirect(route('admin.attendance.attendances.index'));
+
+        $this->assertSame(2, Attendance::where('employee_id', $employee->getKey())->count());
+    }
+
     public function test_upload_overtime_csv_creates_rows(): void
     {
         $staff = $this->staff();

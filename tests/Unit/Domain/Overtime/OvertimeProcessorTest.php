@@ -15,27 +15,24 @@ class OvertimeProcessorTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_marks_processed_overtimes_only(): void
+    public function test_it_recalculates_only_overtimes_within_period(): void
     {
         [$employee] = $this->scenario('EMP001');
 
-        $inMonth = Overtime::create([
-            'employee_id' => $employee->getKey(),
-            'overtime_date' => '2026-01-05',
-            'start_hour' => '18:00:00',
-            'end_hour' => '20:00:00',
-        ]);
-
-        $outMonth = Overtime::create([
-            'employee_id' => $employee->getKey(),
-            'overtime_date' => '2026-02-05',
-            'start_hour' => '18:00:00',
-            'end_hour' => '20:00:00',
-        ]);
+        $inMonth = $this->rawOvertime($employee, '2026-01-05');
+        $outMonth = $this->rawOvertime($employee, '2026-02-05');
 
         app(OvertimeProcessor::class)->process($employee, new \DateTime('2026-01-10'));
 
-        $this->assertStringStartsWith('PROCESSED#', $inMonth->fresh()->description);
+        // Proses bulanan memicu observer (holiday + auto-approve + recalc) sehingga
+        // baris dalam periode terhitung dan marker PROCESSED# transien di-strip.
+        $this->assertGreaterThan(0, (float) $inMonth->fresh()->raw_value);
+        $this->assertGreaterThan(0, (float) $inMonth->fresh()->calculated_value);
+        $this->assertStringNotContainsString('PROCESSED#', (string) $inMonth->fresh()->description);
+
+        // Di luar periode tidak tersentuh sama sekali (tetap nilai mentah 0).
+        $this->assertSame(0.0, (float) $outMonth->fresh()->raw_value);
+        $this->assertSame(0.0, (float) $outMonth->fresh()->calculated_value);
         $this->assertStringNotContainsString('PROCESSED#', (string) $outMonth->fresh()->description);
     }
 
@@ -46,6 +43,26 @@ class OvertimeProcessorTest extends TestCase
         app(OvertimeProcessor::class)->process($employee, new \DateTime('2026-01-10'));
 
         $this->assertSame(0, Overtime::where('employee_id', $employee->getKey())->count());
+    }
+
+    /**
+     * Buat baris lembur mentah tanpa memicu observer kalkulator (setara hasil
+     * upload yang belum diproses).
+     */
+    private function rawOvertime(Employee $employee, string $date): Overtime
+    {
+        $overtime = new Overtime([
+            'employee_id' => $employee->getKey(),
+            'overtime_date' => $date,
+            'start_hour' => '18:00:00',
+            'end_hour' => '20:00:00',
+            'raw_value' => 0,
+            'calculated_value' => 0,
+        ]);
+
+        $overtime->saveQuietly();
+
+        return $overtime;
     }
 
     /**

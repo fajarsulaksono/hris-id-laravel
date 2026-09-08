@@ -71,7 +71,9 @@ class OvertimeController extends BaseController
 
         DB::transaction(function () use ($employees, $period, $processor) {
             foreach ($employees as $employee) {
-                $processor->process($employee, $period);
+                // Clone agar mutasi in-place (processPartialMonth) tidak menggeser
+                // periode untuk karyawan berikutnya.
+                $processor->process($employee, (clone $period));
             }
         });
 

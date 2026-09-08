@@ -76,8 +76,10 @@ class AttendanceController extends BaseController
 
         DB::transaction(function () use ($employees, $period, $attendanceProcessor, $summaryCalculator) {
             foreach ($employees as $employee) {
-                $attendanceProcessor->process($employee, $period);
-                $summaryCalculator->calculate($employee, $period);
+                // Clone agar mutasi in-place (processPartialMonth) tidak menggeser
+                // periode untuk karyawan berikutnya.
+                $attendanceProcessor->process($employee, (clone $period));
+                $summaryCalculator->calculate($employee, (clone $period));
             }
         });
 

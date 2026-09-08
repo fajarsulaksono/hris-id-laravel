@@ -2,9 +2,11 @@
 
 namespace App\Domain\Attendance;
 
+use App\Enums\ReasonType;
 use App\Models\Attendance\Attendance;
 use App\Models\Employee\Employee;
 use App\Models\Master\Reason;
+use App\Support\StringUtil;
 
 class AttendanceProcessor
 {
@@ -79,7 +81,8 @@ class AttendanceProcessor
             );
 
             $reason = Reason::query()
-                ->where('code', $this->reasonCode)
+                ->where('type', ReasonType::ABSENT)
+                ->where('code', StringUtil::uppercase(StringUtil::sanitize($this->reasonCode)))
                 ->first();
 
             $attendance = new Attendance();

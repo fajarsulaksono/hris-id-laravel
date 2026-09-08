@@ -63,8 +63,10 @@ class OvertimeProcessor
 
         $overtime->description = sprintf('%s#%s', self::PROCESS_MARK, $overtime->description);
 
-        // Simpan tanpa membangkitkan event observer agar penanda PROSES tidak ikut di-strip
-        // oleh OvertimeCalculatorService saat kalkulasi ulang.
-        $overtime->saveQuietly();
+        // Simpan normal agar observer OvertimeCalculator berjalan (holiday detect +
+        // auto-approve + kalkulasi ulang), setara preUpdate asli yang memicu
+        // OvertimeCalculatorSubscriber. Marker di-strip lagi oleh kalkulator
+        // sehingga tidak mengendap (perilaku transien sama dgn SEMART_VERSION#).
+        $overtime->save();
     }
 }

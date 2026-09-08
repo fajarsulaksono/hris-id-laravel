@@ -42,6 +42,7 @@ use App\Models\Payroll\PayrollDetail;
 use App\Models\Payroll\PayrollPeriod;
 use App\Models\Payroll\SalaryAllowance;
 use App\Models\Payroll\SalaryBenefit;
+use Illuminate\Validation\ValidationException;
 use App\Models\Payroll\SalaryBenefitHistory;
 use App\Models\Payroll\SalaryComponent;
 use App\Models\Tax\Tax;
@@ -530,7 +531,26 @@ final class MasterModules
                         'model' => Reason::class, 'text' => 'name', 'nullable' => true],
                     self::field('description', 'Keterangan', 'textarea'),
                 ],
-            ),
+            ) + ['validator' => static function (\Illuminate\Http\Request $request, array $data): void {
+                $attendance = new Attendance();
+                $attendance->fill($data);
+                $attendance->absent = $request->boolean('absent');
+
+                app(\App\Domain\Attendance\AttendanceCalculator::class)->calculate($attendance);
+
+                if (! \App\Domain\Attendance\ValidateAttendance::validate($attendance)) {
+                    if ($attendance->absent) {
+                        throw ValidationException::withMessages([
+                            'reason_id' => 'Alasan wajib diisi ketika karyawan tidak masuk (absen).',
+                        ]);
+                    }
+
+                    throw ValidationException::withMessages([
+                        'check_in' => 'Jam masuk wajib diisi ketika karyawan hadir.',
+                        'check_out' => 'Jam keluar wajib diisi ketika karyawan hadir.',
+                    ]);
+                }
+            }],
 
             'attendance-summaries' => self::module(
                 title: 'Rekap Absensi',
@@ -887,6 +907,7 @@ final class MasterModules
         array $columns = [],
         array $searchable = [],
         array $order = ['updated_at', 'desc'],
+        ?callable $validate = null,
     ): array {
         return [
             'title' => $title,
@@ -897,6 +918,7 @@ final class MasterModules
             'order' => $order,
             'fields' => $fields,
             'trash' => true,
+            'validate' => $validate,
         ];
     }
 
