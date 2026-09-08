@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\Employee\CareerHistory;
+use App\Models\Employee\Employee;
+use App\Models\Employee\Mutation;
+use App\Models\Employee\Placement;
+use App\Models\Payroll\SalaryBenefitHistory;
+
 return [
 
     'name' => env('HRIS_NAME', 'HRIS Indonesia'),
@@ -123,11 +129,19 @@ return [
     // Model yang bisa "memakai" sebuah kontrak. Pakai layanan CheckContract /
     // aturan UniqueContract untuk memastikan satu kontrak hanya dipakai satu entitas.
     'contractables' => [
-        \App\Models\Employee\Employee::class,
-        \App\Models\Employee\Placement::class,
-        \App\Models\Employee\CareerHistory::class,
-        \App\Models\Employee\Mutation::class,
-        \App\Models\Payroll\SalaryBenefitHistory::class,
+        Employee::class,
+        Placement::class,
+        CareerHistory::class,
+        Mutation::class,
+        SalaryBenefitHistory::class,
+    ],
+
+    // Data dummy (DummyDataSeeder) untuk demo: karyawan fiktif + absensi/lembur/cuti
+    // + payroll/BPJS/PPH21 beberapa periode terakhir yang sudah ditutup.
+    'seed_dummy' => [
+        'enabled' => (bool) env('HRIS_SEED_DUMMY', false),
+        'employees' => (int) env('HRIS_SEED_DUMMY_EMPLOYEES', 50),
+        'months' => max(1, min((int) env('HRIS_SEED_DUMMY_MONTHS', 3), 6)),
     ],
 
 ];
