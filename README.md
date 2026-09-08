@@ -264,7 +264,7 @@ Laravel 12 (PHP 8.x) with domain-oriented code:
 ## Requirements
 
 - PHP 8.1+
-- MySQL/MariaDB (default connection at `192.168.10.106`, configurable via `.env`)
+- MySQL/MariaDB
 - Composer
 
 ## Installation
