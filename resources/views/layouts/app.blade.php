@@ -424,6 +424,8 @@
     </footer>
 </div>
 
+<!-- jQuery (dependency DataTables 2.x) -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <!-- Bootstrap 5.3 -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
