@@ -155,4 +155,87 @@ class PayrollUiTest extends TestCase
             ->assertOk()
             ->assertSee('Detail Payroll');
     }
+
+    public function test_recap_page_renders_for_processed_period(): void
+    {
+        $gp = SalaryComponent::where('code', 'GP')->first();
+        SalaryBenefit::create([
+            'employee_id' => $this->employee->getKey(),
+            'component_id' => $gp->getKey(),
+            'benefit_value' => 5_000_000,
+        ]);
+
+        PayrollPeriod::create([
+            'company_id' => $this->company->getKey(),
+            'year' => (int) now()->format('Y'),
+            'month' => (int) now()->format('n'),
+            'closed' => false,
+        ]);
+
+        app(SalaryProcessor::class)->process($this->employee, now());
+
+        $year = (int) now()->format('Y');
+        $month = (int) now()->format('n');
+
+        $this->actingAs($this->supervisor)
+            ->get(route('admin.payroll.payrolls.recap', [
+                'year' => $year,
+                'month' => $month,
+                'company_id' => $this->company->getKey(),
+            ]))
+            ->assertOk()
+            ->assertSee('Take Home Pay');
+    }
+
+    public function test_recap_exports_xlsx_and_pdf(): void
+    {
+        $this->actingAs($this->supervisor)
+            ->get(route('admin.payroll.payrolls.recap.export', [
+                'year' => (int) now()->format('Y'),
+                'month' => (int) now()->format('n'),
+                'format' => 'xlsx',
+            ]))
+            ->assertOk();
+
+        $this->actingAs($this->supervisor)
+            ->get(route('admin.payroll.payrolls.recap.export', [
+                'year' => (int) now()->format('Y'),
+                'month' => (int) now()->format('n'),
+                'format' => 'pdf',
+            ]))
+            ->assertOk();
+    }
+
+    public function test_slip_pdf_exports(): void
+    {
+        $gp = SalaryComponent::where('code', 'GP')->first();
+        SalaryBenefit::create([
+            'employee_id' => $this->employee->getKey(),
+            'component_id' => $gp->getKey(),
+            'benefit_value' => 5_000_000,
+        ]);
+
+        PayrollPeriod::create([
+            'company_id' => $this->company->getKey(),
+            'year' => (int) now()->format('Y'),
+            'month' => (int) now()->format('n'),
+            'closed' => false,
+        ]);
+
+        app(SalaryProcessor::class)->process($this->employee, now());
+
+        $payroll = Payroll::where('employee_id', $this->employee->getKey())
+            ->where('period_id', PayrollPeriod::query()
+                ->where('company_id', $this->company->getKey())
+                ->where('year', (int) now()->format('Y'))
+                ->where('month', (int) now()->format('n'))
+                ->value('id'))
+            ->first();
+
+        $this->assertNotNull($payroll);
+
+        $this->actingAs($this->supervisor)
+            ->get(route('admin.payroll.payrolls.pdf', $payroll->getKey()))
+            ->assertOk();
+    }
 }

@@ -18,6 +18,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf as PdfFacade;
+use App\Exports\PayrollRecapExport;
 
 class PayrollController extends BaseController
 {
@@ -161,5 +164,160 @@ class PayrollController extends BaseController
             'costs' => $costs,
             'backUrl' => route('admin.payroll.payrolls.index'),
         ]);
+    }
+
+    public function recap(Request $request): View
+    {
+        $rows = collect();
+        $totals = [];
+
+        if ($request->filled(['year', 'month'])) {
+            $year = (int) $request->query('year');
+            $month = (int) $request->query('month');
+            $companyId = $request->query('company_id');
+
+            $periods = PayrollPeriod::query()
+                ->where('year', $year)
+                ->where('month', $month)
+                ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+                ->pluck('id');
+
+            $payrolls = Payroll::query()
+                ->with(['employee.company', 'period'])
+                ->whereIn('period_id', $periods)
+                ->orderBy('employee_id')
+                ->get();
+
+            $costs = CompanyCost::query()
+                ->whereIn('payroll_id', $payrolls->pluck('id'))
+                ->get()
+                ->groupBy('payroll_id')
+                ->map(fn ($group) => (int) $group->sum(fn ($cost) => (int) $cost->benefit_value));
+
+            $taxes = Tax::query()
+                ->whereIn('period_id', $periods)
+                ->get()
+                ->keyBy(fn ($tax) => $tax->employee_id.'-'.$tax->period_id);
+
+            $rows = $payrolls->map(function (Payroll $payroll) use ($costs, $taxes, &$no) {
+                $no ??= 0;
+
+                $tax = $taxes->get($payroll->employee_id.'-'.$payroll->period_id);
+
+                return [
+                    'no' => ++$no,
+                    'code' => $payroll->employee?->code ?? '-',
+                    'name' => $payroll->employee?->full_name ?? '-',
+                    'company' => $payroll->employee?->company?->name ?? $payroll->period?->company?->name ?? '-',
+                    'period' => $payroll->period?->display ?? '-',
+                    'take_home_pay' => (int) $payroll->take_home_pay,
+                    'tax_value' => $tax ? (int) $tax->tax_value : null,
+                    'cost' => $costs->get($payroll->getKey()) ?? 0,
+                ];
+            })->values();
+
+            $totals = [
+                'take_home_pay' => (int) $rows->sum('take_home_pay'),
+                'tax_value' => (int) $rows->sum('tax_value'),
+                'cost' => (int) $rows->sum('cost'),
+            ];
+        }
+
+        return view('admin.payroll.recap', [
+            'module' => MasterModules::get('payrolls'),
+            'backUrl' => route('admin.payroll.payrolls.index'),
+            'companies' => Company::query()->orderBy('name')->get(),
+            'rows' => $rows,
+            'totals' => $totals,
+            'year' => (int) ($request->query('year') ?: date('Y')),
+            'month' => (int) ($request->query('month') ?: date('n')),
+            'companyId' => $request->query('company_id'),
+        ]);
+    }
+
+    public function recapExport(Request $request)
+    {
+        $year = (int) $request->query('year', date('Y'));
+        $month = (int) $request->query('month', date('n'));
+        $companyId = $request->query('company_id');
+
+        $periods = PayrollPeriod::query()
+            ->where('year', $year)
+            ->where('month', $month)
+            ->when($companyId, fn ($q) => $q->where('company_id', $companyId))
+            ->pluck('id');
+
+        $payrolls = Payroll::query()
+            ->with(['employee.company', 'period'])
+            ->whereIn('period_id', $periods)
+            ->orderBy('employee_id')
+            ->get();
+
+        $costs = CompanyCost::query()
+            ->whereIn('payroll_id', $payrolls->pluck('id'))
+            ->get()
+            ->groupBy('payroll_id')
+            ->map(fn ($group) => (int) $group->sum(fn ($cost) => (int) $cost->benefit_value));
+
+        $taxes = Tax::query()
+            ->whereIn('period_id', $periods)
+            ->get()
+            ->keyBy(fn ($tax) => $tax->employee_id.'-'.$tax->period_id);
+
+        $no = 0;
+        $rows = $payrolls->map(function (Payroll $payroll) use ($costs, $taxes, &$no) {
+            $tax = $taxes->get($payroll->employee_id.'-'.$payroll->period_id);
+
+            return [
+                ++$no,
+                $payroll->employee?->code ?? '-',
+                $payroll->employee?->full_name ?? '-',
+                $payroll->employee?->company?->name ?? $payroll->period?->company?->name ?? '-',
+                $payroll->period?->display ?? '-',
+                (int) $payroll->take_home_pay,
+                $tax ? (int) $tax->tax_value : 0,
+                $costs->get($payroll->getKey()) ?? 0,
+            ];
+        })->all();
+
+        $periodLabel = str_pad((string) $month, 2, '0', STR_PAD_LEFT).'-'.$year;
+        $fileName = "payroll-recap-{$periodLabel}";
+
+        if ($request->query('format') === 'pdf') {
+            $pdf = PdfFacade::loadView('admin.payroll.recap-pdf', [
+                'title' => 'Rekapitulasi Penggajian '.$periodLabel,
+                'periodLabel' => $periodLabel,
+                'rows' => $rows,
+            ]);
+
+            return $pdf->download($fileName.'.pdf');
+        }
+
+        $export = new PayrollRecapExport($rows, 'Payroll '.$periodLabel);
+
+        return Excel::download($export, $fileName.'.xlsx');
+    }
+
+    public function slipPdf(string $id)
+    {
+        $payroll = Payroll::with(['employee', 'period.company', 'details.component'])->findOrFail($id);
+
+        $details = $payroll->details->sortBy(fn (PayrollDetail $detail) => $detail->component?->state === \App\Enums\SalaryState::PLUS ? 0 : 1);
+
+        $costs = CompanyCost::query()
+            ->where('payroll_id', $payroll->getKey())
+            ->with('component')
+            ->get();
+
+        $pdf = PdfFacade::loadView('admin.payroll.slip-pdf', [
+            'payroll' => $payroll,
+            'details' => $details,
+            'costs' => $costs,
+        ]);
+
+        $period = $payroll->period?->display ?? 'slip';
+        $code = $payroll->employee?->code ?? 'slip';
+
+        return $pdf->download("slip-{$period}-{$code}.pdf");
     }
 }

@@ -9,6 +9,9 @@
 @section('content-header')
     <x-crud.page-header title="Detail Payroll" subtitle="Slip gaji {{ $payroll->period?->display }}">
         <x-slot:actions>
+            <a href="{{ route('admin.payroll.payrolls.pdf', $payroll->getKey()) }}" class="btn btn-outline-danger">
+                <i class="ti ti-file-type-pdf me-1"></i> Export PDF
+            </a>
             <a href="{{ $backUrl }}" class="btn btn-outline-secondary">
                 <i class="ti ti-arrow-back me-1"></i> Kembali
             </a>

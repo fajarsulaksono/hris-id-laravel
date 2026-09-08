@@ -372,6 +372,12 @@
                                     <p>Proses Pajak</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.payroll.payrolls.recap') }}" class="nav-link">
+                                    <i class="ti ti-table-export nav-icon"></i>
+                                    <p>Rekap Penggajian</p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     @endcan

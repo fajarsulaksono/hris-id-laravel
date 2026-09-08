@@ -77,6 +77,8 @@ Route::middleware('auth')->group(function () {
                         $d(Route::post('/process', [PayrollController::class, 'process']))->name('process.store');
                         $d(Route::get('/tax', [PayrollController::class, 'taxForm']))->name('tax');
                         $d(Route::post('/tax', [PayrollController::class, 'processTax']))->name('tax.store');
+                        $d(Route::get('/recap', [PayrollController::class, 'recap']))->name('recap');
+                        $d(Route::get('/recap/export', [PayrollController::class, 'recapExport']))->name('recap.export');
                     }
 
                     $d(Route::get('/{id}', [MasterDataController::class, 'show']))->name('show');
@@ -90,6 +92,7 @@ Route::middleware('auth')->group(function () {
 
                     if ($key === 'payrolls') {
                         $d(Route::get('/{id}/detail', [PayrollController::class, 'detail']))->name('detail');
+                        $d(Route::get('/{id}/pdf', [PayrollController::class, 'slipPdf']))->name('pdf');
                     }
                     $d(Route::put('/{id}', [MasterDataController::class, 'update']))->name('update');
                     $d(Route::delete('/{id}', [MasterDataController::class, 'destroy']))->name('destroy');
