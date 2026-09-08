@@ -41,4 +41,14 @@ class PayrollDetail extends Model
     {
         return $this->belongsTo(SalaryComponent::class, 'component_id');
     }
+
+    public function getPayrollLabelAttribute(): ?string
+    {
+        return $this->payroll?->display;
+    }
+
+    public function getComponentNameAttribute(): ?string
+    {
+        return $this->component?->name;
+    }
 }

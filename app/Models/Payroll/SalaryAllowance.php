@@ -46,4 +46,14 @@ class SalaryAllowance extends Model
     {
         return $this->belongsTo(SalaryComponent::class, 'component_id');
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getComponentNameAttribute(): ?string
+    {
+        return $this->component?->name;
+    }
 }

@@ -27,8 +27,7 @@ class PayrollProcessor
 
     private function validate(Employee $employee, \DateTimeInterface $date): void
     {
-        $prevPeriod = clone $date;
-        $prevPeriod->modify('-1 month');
+        $prevPeriod = (clone $date)->modify('-1 month');
 
         $prev = $this->findPeriod($employee, $prevPeriod);
         if (! $prev && ! $this->isEmptyForDate($date)) {

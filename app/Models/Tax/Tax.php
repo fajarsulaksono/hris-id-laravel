@@ -50,4 +50,14 @@ class Tax extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getPeriodLabelAttribute(): ?string
+    {
+        return $this->period?->display;
+    }
 }

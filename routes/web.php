@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\OvertimeController;
+use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Api\DependencyOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -71,6 +72,13 @@ Route::middleware('auth')->group(function () {
                         $d(Route::post('/process', [OvertimeController::class, 'process']))->name('process.store');
                     }
 
+                    if ($key === 'payrolls') {
+                        $d(Route::get('/process', [PayrollController::class, 'processForm']))->name('process');
+                        $d(Route::post('/process', [PayrollController::class, 'process']))->name('process.store');
+                        $d(Route::get('/tax', [PayrollController::class, 'taxForm']))->name('tax');
+                        $d(Route::post('/tax', [PayrollController::class, 'processTax']))->name('tax.store');
+                    }
+
                     $d(Route::get('/{id}', [MasterDataController::class, 'show']))->name('show');
                     $d(Route::get('/{id}/edit', [MasterDataController::class, 'edit']))->name('edit');
 
@@ -78,6 +86,10 @@ Route::middleware('auth')->group(function () {
                         $d(Route::get('/{id}/profile', [EmployeeController::class, 'showProfile']))->name('profile');
                         $d(Route::get('/{id}/promotion', [EmployeeController::class, 'promotionForm']))->name('promotion');
                         $d(Route::post('/{id}/promotion', [EmployeeController::class, 'storePromotion']))->name('promotion.store');
+                    }
+
+                    if ($key === 'payrolls') {
+                        $d(Route::get('/{id}/detail', [PayrollController::class, 'detail']))->name('detail');
                     }
                     $d(Route::put('/{id}', [MasterDataController::class, 'update']))->name('update');
                     $d(Route::delete('/{id}', [MasterDataController::class, 'destroy']))->name('destroy');

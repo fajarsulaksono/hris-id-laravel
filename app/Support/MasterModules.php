@@ -9,6 +9,7 @@ use App\Enums\MaritalStatus;
 use App\Enums\MutationType;
 use App\Enums\ReasonType;
 use App\Enums\RiskRatio;
+use App\Enums\SalaryState;
 use App\Enums\TaxGroup;
 use App\Models\Company\Company;
 use App\Models\Company\CompanyAddress;
@@ -35,6 +36,16 @@ use App\Models\Attendance\AttendanceSummary;
 use App\Models\Attendance\Leave;
 use App\Models\Attendance\Overtime;
 use App\Models\Attendance\Shiftment;
+use App\Models\Payroll\CompanyCost;
+use App\Models\Payroll\Payroll;
+use App\Models\Payroll\PayrollDetail;
+use App\Models\Payroll\PayrollPeriod;
+use App\Models\Payroll\SalaryAllowance;
+use App\Models\Payroll\SalaryBenefit;
+use App\Models\Payroll\SalaryBenefitHistory;
+use App\Models\Payroll\SalaryComponent;
+use App\Models\Tax\Tax;
+use App\Models\Tax\TaxGroupHistory;
 
 final class MasterModules
 {
@@ -608,6 +619,230 @@ final class MasterModules
                     self::field('description', 'Keterangan', 'textarea'),
                 ],
             ),
+
+            'salary-components' => self::module(
+                title: 'Komponen Gaji',
+                menu: 'payroll',
+                model: SalaryComponent::class,
+                columns: [
+                    ['data' => 'code', 'title' => 'Kode'],
+                    ['data' => 'name', 'title' => 'Nama'],
+                    ['data' => 'state_text', 'title' => 'Tipe'],
+                    ['data' => 'fixed', 'title' => 'Tetap', 'render' => 'bool'],
+                ],
+                searchable: ['code', 'name'],
+                order: ['code', 'asc'],
+                fields: [
+                    self::field('code', 'Kode', 'text', max: 7, required: true, upcase: true, unique: true),
+                    self::field('name', 'Nama', 'text', required: true, upcase: true),
+                    ['name' => 'state', 'label' => 'Tipe', 'type' => 'select', 'required' => true,
+                        'options' => self::enumOptions(SalaryState::class)],
+                    ['name' => 'fixed', 'label' => 'Tunjangan Tetap', 'type' => 'checkbox', 'default' => 0],
+                ],
+            ),
+
+            'salary-benefits' => self::module(
+                title: 'Gaji Pokok & Tunjangan',
+                menu: 'payroll',
+                model: SalaryBenefit::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'component_name', 'title' => 'Komponen'],
+                    ['data' => 'benefit_value', 'title' => 'Nilai', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'component_id', 'label' => 'Komponen', 'type' => 'select',
+                        'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
+                    self::field('benefit_value', 'Nilai', 'text', required: true),
+                ],
+            ),
+
+            'salary-allowances' => self::module(
+                title: 'Tunjangan & Potongan',
+                menu: 'payroll',
+                model: SalaryAllowance::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'component_name', 'title' => 'Komponen'],
+                    ['data' => 'year', 'title' => 'Tahun'],
+                    ['data' => 'month', 'title' => 'Bulan'],
+                    ['data' => 'benefit_value', 'title' => 'Nilai', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'component_id', 'label' => 'Komponen', 'type' => 'select',
+                        'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
+                    self::field('year', 'Tahun', 'text', max: 4, required: true),
+                    self::field('month', 'Bulan', 'text', max: 2, required: true),
+                    self::field('benefit_value', 'Nilai', 'text', required: true),
+                ],
+            ),
+
+            'salary-benefit-histories' => self::module(
+                title: 'Riwayat Perubahan Gaji',
+                menu: 'payroll',
+                model: SalaryBenefitHistory::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'component_name', 'title' => 'Komponen'],
+                    ['data' => 'old_benefit_value', 'title' => 'Nilai Lama', 'render' => 'money'],
+                    ['data' => 'new_benefit_value', 'title' => 'Nilai Baru', 'render' => 'money'],
+                    ['data' => 'description', 'title' => 'Keterangan'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'component_id', 'label' => 'Komponen', 'type' => 'select',
+                        'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
+                    ['name' => 'contract_id', 'label' => 'Kontrak', 'type' => 'select',
+                        'model' => Contract::class, 'text' => 'display', 'nullable' => true],
+                    self::field('new_benefit_value', 'Nilai Baru', 'text', required: true),
+                    self::field('description', 'Keterangan', 'textarea'),
+                ],
+            ),
+
+            'payroll-periods' => self::module(
+                title: 'Periode Penggajian',
+                menu: 'payroll',
+                model: PayrollPeriod::class,
+                columns: [
+                    ['data' => 'company_name', 'title' => 'Perusahaan'],
+                    ['data' => 'year', 'title' => 'Tahun'],
+                    ['data' => 'month', 'title' => 'Bulan'],
+                    ['data' => 'closed', 'title' => 'Ditutup', 'render' => 'bool'],
+                ],
+                searchable: [],
+                order: ['year', 'desc'],
+                fields: [
+                    ['name' => 'company_id', 'label' => 'Perusahaan', 'type' => 'select',
+                        'model' => Company::class, 'text' => 'name', 'required' => true],
+                    self::field('year', 'Tahun', 'text', max: 4, required: true),
+                    self::field('month', 'Bulan', 'text', max: 2, required: true),
+                    ['name' => 'closed', 'label' => 'Ditutup', 'type' => 'checkbox', 'default' => 1],
+                ],
+            ),
+
+            'payrolls' => self::module(
+                title: 'Riwayat Penggajian',
+                menu: 'payroll',
+                model: Payroll::class,
+                columns: [
+                    ['data' => 'period_label', 'title' => 'Periode'],
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'take_home_pay', 'title' => 'Total Gaji', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'period_id', 'label' => 'Periode', 'type' => 'select',
+                        'model' => PayrollPeriod::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    self::field('take_home_pay', 'Total Gaji', 'text', required: true),
+                ],
+            ),
+
+            'payroll-details' => self::module(
+                title: 'Rincian Gaji',
+                menu: 'payroll',
+                model: PayrollDetail::class,
+                columns: [
+                    ['data' => 'payroll_label', 'title' => 'Payroll'],
+                    ['data' => 'component_name', 'title' => 'Komponen'],
+                    ['data' => 'benefit_value', 'title' => 'Nilai', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'payroll_id', 'label' => 'Payroll', 'type' => 'select',
+                        'model' => Payroll::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'component_id', 'label' => 'Komponen', 'type' => 'select',
+                        'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
+                    self::field('benefit_value', 'Nilai', 'text', required: true),
+                ],
+            ),
+
+            'company-costs' => self::module(
+                title: 'Beban Perusahaan',
+                menu: 'payroll',
+                model: CompanyCost::class,
+                columns: [
+                    ['data' => 'payroll_label', 'title' => 'Payroll'],
+                    ['data' => 'component_name', 'title' => 'Komponen'],
+                    ['data' => 'benefit_value', 'title' => 'Nilai', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'payroll_id', 'label' => 'Payroll', 'type' => 'select',
+                        'model' => Payroll::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'component_id', 'label' => 'Komponen', 'type' => 'select',
+                        'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
+                    self::field('benefit_value', 'Nilai', 'text', required: true),
+                ],
+            ),
+
+            'taxes' => self::module(
+                title: 'Riwayat Pajak',
+                menu: 'payroll',
+                model: Tax::class,
+                columns: [
+                    ['data' => 'period_label', 'title' => 'Periode'],
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'tax_value', 'title' => 'Pajak', 'render' => 'money'],
+                    ['data' => 'untaxable', 'title' => 'PTKP', 'render' => 'money'],
+                    ['data' => 'taxable', 'title' => 'PKP', 'render' => 'money'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'period_id', 'label' => 'Periode', 'type' => 'select',
+                        'model' => PayrollPeriod::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'tax_group', 'label' => 'Kelompok Pajak', 'type' => 'select',
+                        'options' => self::enumOptions(TaxGroup::class), 'required' => true],
+                    self::field('untaxable', 'PTKP', 'text'),
+                    self::field('taxable', 'PKP', 'text'),
+                    self::field('tax_value', 'Pajak', 'text', required: true),
+                ],
+            ),
+
+            'tax-group-histories' => self::module(
+                title: 'Riwayat Kelompok Pajak',
+                menu: 'payroll',
+                model: TaxGroupHistory::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'old_tax_group', 'title' => 'Pajak Lama', 'render' => fn ($row) => $row->old_tax_group?->label() ?? ''],
+                    ['data' => 'new_tax_group', 'title' => 'Pajak Baru', 'render' => fn ($row) => $row->new_tax_group?->label() ?? ''],
+                    ['data' => 'old_risk_ratio', 'title' => 'Risiko Lama', 'render' => fn ($row) => $row->old_risk_ratio?->label() ?? ''],
+                    ['data' => 'new_risk_ratio', 'title' => 'Risiko Baru', 'render' => fn ($row) => $row->new_risk_ratio?->label() ?? ''],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'old_tax_group', 'label' => 'Kelompok Pajak Lama', 'type' => 'select',
+                        'options' => self::enumOptions(TaxGroup::class)],
+                    ['name' => 'new_tax_group', 'label' => 'Kelompok Pajak Baru', 'type' => 'select',
+                        'options' => self::enumOptions(TaxGroup::class)],
+                    ['name' => 'old_risk_ratio', 'label' => 'Rasio Risiko Lama', 'type' => 'select',
+                        'options' => self::enumOptions(RiskRatio::class)],
+                    ['name' => 'new_risk_ratio', 'label' => 'Rasio Risiko Baru', 'type' => 'select',
+                        'options' => self::enumOptions(RiskRatio::class)],
+                ],
+            ),
         ];
     }
 
@@ -640,6 +875,7 @@ final class MasterModules
             'attendance' => 'attendance_menu',
             'overtime' => 'overtime_menu',
             'leave' => 'leave_menu',
+            'payroll' => 'payroll_menu',
         ];
     }
 

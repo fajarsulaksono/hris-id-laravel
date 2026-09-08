@@ -53,4 +53,14 @@ class SalaryComponent extends Model
     {
         return $this->state?->label() ?? '';
     }
+
+    public function getStateTextAttribute(): string
+    {
+        return $this->getStateText();
+    }
+
+    public function getComponentNameAttribute(): string
+    {
+        return $this->name;
+    }
 }

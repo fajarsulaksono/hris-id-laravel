@@ -62,6 +62,11 @@ class DataTableServer
                     continue;
                 }
 
+                if ($render === 'money') {
+                    $item[$column['data']] = $this->money($row->{$column['data']});
+                    continue;
+                }
+
                 $item[$column['data']] = $column['data'] === 'DT_RowId'
                     ? $row->getKey()
                     : data_get($row, $column['data']);
@@ -75,5 +80,16 @@ class DataTableServer
             'recordsFiltered' => $recordsFiltered,
             'data' => $data,
         ];
+    }
+
+    protected function money(mixed $value): string
+    {
+        $currency = (array) config('hris.currency', []);
+        $prefix = (string) ($currency['prefix'] ?? 'Rp.');
+        $decimals = (int) ($currency['decimal_precision'] ?? 2);
+        $decimalPoint = (string) ($currency['decimal_point'] ?? ',');
+        $thousandSeparator = (string) ($currency['thousand_separator'] ?? '.');
+
+        return $prefix.number_format((float) $value, $decimals, $decimalPoint, $thousandSeparator);
     }
 }

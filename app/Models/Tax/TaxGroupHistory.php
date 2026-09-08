@@ -42,4 +42,9 @@ class TaxGroupHistory extends Model
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
 }

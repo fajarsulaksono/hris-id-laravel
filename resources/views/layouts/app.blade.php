@@ -346,8 +346,33 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon ti ti-wallet"></i>
-                            <p>Penggajian</p>
+                            <p>
+                                Penggajian
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @foreach (\App\Support\MasterModules::byMenu('payroll') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
+                            <li class="nav-item">
+                                <a href="{{ route('admin.payroll.payrolls.process') }}" class="nav-link">
+                                    <i class="ti ti-calendar-stats nav-icon"></i>
+                                    <p>Proses Payroll</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.payroll.payrolls.tax') }}" class="nav-link">
+                                    <i class="ti ti-report-money nav-icon"></i>
+                                    <p>Proses Pajak</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endcan
 

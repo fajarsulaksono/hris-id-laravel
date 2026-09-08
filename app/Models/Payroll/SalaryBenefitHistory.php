@@ -52,4 +52,14 @@ class SalaryBenefitHistory extends Model
     {
         return $this->belongsTo(Contract::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getComponentNameAttribute(): ?string
+    {
+        return $this->component?->name;
+    }
 }

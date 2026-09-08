@@ -44,4 +44,14 @@ class PayrollPeriod extends Model
     {
         return $this->hasMany(Payroll::class, 'period_id');
     }
+
+    public function getCompanyNameAttribute(): ?string
+    {
+        return $this->company?->name;
+    }
+
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s-%s', $this->year, str_pad((string) $this->month, 2, '0', STR_PAD_LEFT));
+    }
 }

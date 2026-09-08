@@ -48,4 +48,19 @@ class Payroll extends Model
     {
         return $this->hasMany(PayrollDetail::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getPeriodLabelAttribute(): ?string
+    {
+        return $this->period?->display;
+    }
+
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s - %s', $this->period?->display ?? '-', $this->employee?->display ?? '-');
+    }
 }
