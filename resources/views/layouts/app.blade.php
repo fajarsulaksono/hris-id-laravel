@@ -74,6 +74,62 @@
         .sidebar-mini.sidebar-collapse:not(.sidebar-without-hover) .app-sidebar:hover .sidebar-brand .brand-image {
             display: none;
         }
+        /* Row action (kolom "Aksi") buttons — compact icon pills */
+        .row-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
+        .row-actions form {
+            display: inline-flex;
+            margin: 0;
+            padding: 0;
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.875rem;
+            height: 1.875rem;
+            padding: 0;
+            border: 1px solid transparent;
+            border-radius: .55rem;
+            font-size: 1.15rem;
+            line-height: 1;
+            text-decoration: none;
+            transition: background-color .15s ease-in-out, color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+        .btn-action:hover {
+            text-decoration: none;
+        }
+        .btn-action:focus-visible {
+            outline: 2px solid var(--bs-primary);
+            outline-offset: 1px;
+        }
+        .btn-action i {
+            pointer-events: none;
+        }
+
+        .btn-action-view { color: #5b6472; background: rgba(91, 100, 114, .12); border-color: rgba(91, 100, 114, .3); }
+        .btn-action-view:hover { color: #fff; background: #5b6472; border-color: #5b6472; }
+
+        .btn-action-profile { color: #0e7490; background: rgba(14, 116, 144, .12); border-color: rgba(14, 116, 144, .3); }
+        .btn-action-profile:hover { color: #fff; background: #0e7490; border-color: #0e7490; }
+
+        .btn-action-edit { color: #1d4ed8; background: rgba(29, 78, 216, .12); border-color: rgba(29, 78, 216, .3); }
+        .btn-action-edit:hover { color: #fff; background: #1d4ed8; border-color: #1d4ed8; }
+
+        .btn-action-delete { color: #b91c1c; background: rgba(185, 28, 28, .12); border-color: rgba(185, 28, 28, .3); }
+        .btn-action-delete:hover { color: #fff; background: #b91c1c; border-color: #b91c1c; }
+
+        .btn-action-restore { color: #15803d; background: rgba(21, 128, 61, .12); border-color: rgba(21, 128, 61, .3); }
+        .btn-action-restore:hover { color: #fff; background: #15803d; border-color: #15803d; }
+
+        [data-bs-theme="dark"] .btn-action-view { color: #cbd5e1; background: rgba(148, 163, 184, .16); border-color: rgba(148, 163, 184, .38); }
+        [data-bs-theme="dark"] .btn-action-profile { color: #67e8f9; background: rgba(34, 211, 238, .14); border-color: rgba(34, 211, 238, .38); }
+        [data-bs-theme="dark"] .btn-action-edit { color: #93c5fd; background: rgba(59, 130, 246, .16); border-color: rgba(59, 130, 246, .42); }
+        [data-bs-theme="dark"] .btn-action-delete { color: #fca5a5; background: rgba(239, 68, 68, .16); border-color: rgba(239, 68, 68, .45); }
+        [data-bs-theme="dark"] .btn-action-restore { color: #86efac; background: rgba(34, 197, 94, .16); border-color: rgba(34, 197, 94, .45); }
     </style>
     @stack('styles')
 </head>
