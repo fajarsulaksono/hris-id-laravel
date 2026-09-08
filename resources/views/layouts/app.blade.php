@@ -45,6 +45,10 @@
         .app-header .navbar-nav .ti {
             font-size: 1.4rem;
         }
+        .app-header #theme-toggle .ti,
+        .app-header .nav-link [data-lte-icon] {
+            font-size: 1.3rem;
+        }
         .sidebar-overlay {
             display: none !important;
         }
