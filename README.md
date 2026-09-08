@@ -16,7 +16,7 @@ A Laravel 12 port of the SemartHris (Symfony 6.4) application. Focused on Indone
 ## Requirements
 
 - PHP 8.1+
-- MySQL (default connection at `192.168.10.106`)
+- MySQL/MariaDB
 - Composer
 
 ## Installation
