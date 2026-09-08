@@ -51,4 +51,19 @@ class EmployeeAddress extends Model
     {
         return $this->belongsTo(City::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getRegionNameAttribute(): ?string
+    {
+        return $this->region?->name;
+    }
+
+    public function getCityNameAttribute(): ?string
+    {
+        return $this->city?->name;
+    }
 }

@@ -47,11 +47,11 @@ Simbol: `[x]` selesai, `[ ]` belum, `[-]` sebagian/sebagian besar selesai.
 ## Fase 2 — Karyawan & Kontrak
 
 - [x] Model: `Employee`, `EmployeeAddress`, `Placement`, `Mutation`, `CareerHistory`, `TaxGroupHistory` + relasi supervisor
-- [x] Port domain: `SupervisorChecker`, `UsernameGenerator` (app/Domain/Employee, app/Domain/User)
-- [ ] Observer: tulis `CareerHistory` saat penempatan/mutasi; sinkron data karyawan saat mutasi; default address; join date dari kontrak
-- [ ] Policy `EmployeePolicy` (port `SupervisorVoter`): view/update hanya anak buah dengan level jabatan berbeda
-- [ ] Halaman profil karyawan (foto via medialibrary), form dinamis, mutasi & promosi/demosi (CRUD + Blade)
-- [ ] Password default + generate username pada pembuatan karyawan (Observer + UsernameGenerator)
+- [x] Port domain: `SupervisorChecker` (bug rekursi diperbaiki), `UsernameGenerator` + `EmployeeAccountManager` (app/Domain/Employee, app/Domain/User, app/Domain/Job)
+- [x] Observer: tulis `CareerHistory` saat penempatan/mutasi (`CareerHistoryService`), sinkron data karyawan saat mutasi (`MutationApplier`), default address (`EmployeeAddressObserver`), join date dari kontrak (`EmployeeObserver`)
+- [x] Policy `EmployeePolicy` (port `SupervisorVoter`): view/update hanya anak buah dengan level jabatan berbeda; HR+ via `Gate::before`
+- [x] Halaman profil karyawan, form dinamis, mutasi & promosi/demosi — CRUD modul karyawan (`employees`, `employee-addresses`, `placements`, `mutations`, `career-histories`) + form dependen + **upload foto profil via medialibrary** (koleksi `profile` `singleFile`, migrasi media `uuidMorphs`, thumbnail `thumb`, tipe field `image` di CRUD generik) + **halaman profil khusus** (`GET admin.employee.employees.{id}.profile`: foto, data pribadi, posisi, kontrak, alamat, timeline riwayat karir) + **form promosi/demosi khusus** (`GET/POST admin.employee.employees.{id}.promotion`: validasi type `p/d`, tulis `Mutation` → observer menerapkan posisi baru + riwayat karir otomatis)
+- [x] Password default + generate username pada pembuatan karyawan (Observer `EmployeeObserver` + `UsernameGenerator`, `config/hris.default_password`; role default `Employee::DEFAULT_ROLE`) — `DEFAULT_ROLE` disamakan `ROLE_EMPLOYEE` → `EMPLOYEE` agar sesuai RoleSeeder
 
 ## Fase 3 — Absensi, Lembur & Cuti
 

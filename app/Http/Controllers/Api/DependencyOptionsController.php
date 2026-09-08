@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Company\CompanyDepartment;
 use App\Models\Company\Department;
+use App\Models\Company\JobTitle;
 use App\Models\Master\City;
 use App\Models\Master\Region;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,9 @@ class DependencyOptionsController extends Controller
                             ->from((new CompanyDepartment())->getTable())
                             ->where('company_id', $parent);
                     }))
+            ),
+            'job-title-by-level' => $this->toOptions(
+                JobTitle::query()->when($parent, fn ($q) => $q->where('job_level_id', $parent))
             ),
             default => abort(404),
         };

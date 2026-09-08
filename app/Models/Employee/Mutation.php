@@ -110,4 +110,54 @@ class Mutation extends Model
     {
         return $this->type?->label() ?? '';
     }
+
+    public function getTypeTextAttribute(): string
+    {
+        return $this->getTypeText();
+    }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getOldCompanyNameAttribute(): ?string
+    {
+        return $this->oldCompany?->name;
+    }
+
+    public function getOldDepartmentNameAttribute(): ?string
+    {
+        return $this->oldDepartment?->name;
+    }
+
+    public function getOldJobLevelNameAttribute(): ?string
+    {
+        return $this->oldJobLevel?->name;
+    }
+
+    public function getOldJobTitleNameAttribute(): ?string
+    {
+        return $this->oldJobTitle?->name;
+    }
+
+    public function getNewCompanyNameAttribute(): ?string
+    {
+        return $this->newCompany?->name;
+    }
+
+    public function getNewDepartmentNameAttribute(): ?string
+    {
+        return $this->newDepartment?->name;
+    }
+
+    public function getNewJobLevelNameAttribute(): ?string
+    {
+        return $this->newJobLevel?->name;
+    }
+
+    public function getNewJobTitleNameAttribute(): ?string
+    {
+        return $this->newJobTitle?->name;
+    }
 }

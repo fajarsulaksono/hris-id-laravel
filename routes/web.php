@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Api\DependencyOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -54,6 +55,12 @@ Route::middleware('auth')->group(function () {
                     $d(Route::get('/trash', [MasterDataController::class, 'trash']))->name('trash');
                     $d(Route::get('/{id}', [MasterDataController::class, 'show']))->name('show');
                     $d(Route::get('/{id}/edit', [MasterDataController::class, 'edit']))->name('edit');
+
+                    if ($key === 'employees') {
+                        $d(Route::get('/{id}/profile', [EmployeeController::class, 'showProfile']))->name('profile');
+                        $d(Route::get('/{id}/promotion', [EmployeeController::class, 'promotionForm']))->name('promotion');
+                        $d(Route::post('/{id}/promotion', [EmployeeController::class, 'storePromotion']))->name('promotion.store');
+                    }
                     $d(Route::put('/{id}', [MasterDataController::class, 'update']))->name('update');
                     $d(Route::delete('/{id}', [MasterDataController::class, 'destroy']))->name('destroy');
                     $d(Route::post('/{id}/restore', [MasterDataController::class, 'restore']))->name('restore');

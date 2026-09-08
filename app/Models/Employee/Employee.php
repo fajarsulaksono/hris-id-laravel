@@ -24,18 +24,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
 
-class Employee extends Authenticatable
+class Employee extends Authenticatable implements HasMedia
 {
-    use HasUuids;
-    use SoftDeletes;
     use Blameable;
-    use HasRoles;
-    use Notifiable;
     use CanResetPassword;
+    use HasRoles;
+    use HasUuids;
+    use InteractsWithMedia;
+    use Notifiable;
+    use SoftDeletes;
 
-    public const DEFAULT_ROLE = 'ROLE_EMPLOYEE';
+    public const DEFAULT_ROLE = 'EMPLOYEE';
 
     protected $table = 'employees';
 
@@ -178,9 +182,24 @@ class Employee extends Authenticatable
         return $this->hasMany(EmployeeAddress::class);
     }
 
+    public function careerHistories(): HasMany
+    {
+        return $this->hasMany(CareerHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    public function mutations(): HasMany
+    {
+        return $this->hasMany(Mutation::class)->orderBy('created_at', 'desc');
+    }
+
     public function getEmployeeStatusText(): string
     {
         return $this->employee_status?->label() ?? '';
+    }
+
+    public function getEmployeeStatusTextAttribute(): string
+    {
+        return $this->getEmployeeStatusText();
     }
 
     public function getGenderText(): string
@@ -188,14 +207,29 @@ class Employee extends Authenticatable
         return $this->gender?->label() ?? '';
     }
 
+    public function getGenderTextAttribute(): string
+    {
+        return $this->getGenderText();
+    }
+
     public function getIdentityTypeText(): string
     {
         return $this->identity_type?->label() ?? '';
     }
 
+    public function getIdentityTypeTextAttribute(): string
+    {
+        return $this->getIdentityTypeText();
+    }
+
     public function getMaritalStatusText(): string
     {
         return $this->marital_status?->label() ?? '';
+    }
+
+    public function getMaritalStatusTextAttribute(): string
+    {
+        return $this->getMaritalStatusText();
     }
 
     public function getTaxGroupText(): string
@@ -213,10 +247,60 @@ class Employee extends Authenticatable
         return $this->risk_ratio?->value() ?? 0.0;
     }
 
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s - %s', $this->code, $this->full_name);
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->full_name ?? (string) $this->code;
+    }
+
+    public function getCompanyNameAttribute(): ?string
+    {
+        return $this->company?->name;
+    }
+
+    public function getDepartmentNameAttribute(): ?string
+    {
+        return $this->department?->name;
+    }
+
+    public function getJobLevelNameAttribute(): ?string
+    {
+        return $this->jobLevel?->name;
+    }
+
+    public function getJobTitleNameAttribute(): ?string
+    {
+        return $this->jobTitle?->name;
+    }
+
+    public function getSupervisorNameAttribute(): ?string
+    {
+        return $this->supervisor?->display;
+    }
+
+    public function getContractNameAttribute(): ?string
+    {
+        return $this->contract?->display;
+    }
+
+    public function getRegionOfBirthNameAttribute(): ?string
+    {
+        return $this->regionOfBirth?->name;
+    }
+
+    public function getCityOfBirthNameAttribute(): ?string
+    {
+        return $this->cityOfBirth?->name;
+    }
+
     public function isResign(): bool
     {
         $now = now();
-        if (!$this->resign_date) {
+        if (! $this->resign_date) {
             return false;
         }
 
@@ -236,6 +320,26 @@ class Employee extends Authenticatable
     public function setPassword(string $value): void
     {
         $this->attributes['password'] = $value;
+    }
+
+    public function getProfilePhotoUrlAttribute(): string
+    {
+        return $this->getFirstMediaUrl('profile');
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('profile')
+            ->singleFile()
+            ->useDisk((string) config('media-library.disk_name'));
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+            ->width(160)
+            ->height(160)
+            ->nonQueued();
     }
 
     public function getAuthPassword(): string

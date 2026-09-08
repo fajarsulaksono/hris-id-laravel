@@ -17,7 +17,7 @@
     <x-crud.form-errors />
 
     <x-card>
-        <form method="POST" action="{{ $formAction }}" novalidate>
+        <form method="POST" action="{{ $formAction }}" enctype="multipart/form-data" novalidate>
             @csrf
             @if ($formMethod === 'PUT')
                 @method('PUT')

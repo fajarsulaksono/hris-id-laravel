@@ -149,7 +149,7 @@
             </a>
         </div>
 
-        <div class="sidebar-search" role="search">
+        <div class="sidebar-search mt-3" role="search">
             <label for="sidebar-search-input" class="visually-hidden">Filter menu</label>
             <input type="search" id="sidebar-search-input" class="form-control form-control-sm" placeholder="Filter menu…" autocomplete="off" data-lte-toggle="sidebar-search" data-lte-target="#navigation">
             <p class="fs-7 text-secondary mt-2 mb-0" data-lte-search-empty="" role="status" hidden>
@@ -221,12 +221,14 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="#" class="nav-link">
-                                    <i class="ti ti-circle nav-icon"></i>
-                                    <p>Daftar Karyawan</p>
-                                </a>
-                            </li>
+                            @foreach (\App\Support\MasterModules::byMenu('employee') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
                         </ul>
                     </li>
                     @endcan

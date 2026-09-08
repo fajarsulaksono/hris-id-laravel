@@ -40,6 +40,11 @@ enum TaxGroup: string
         };
     }
 
+    public function label(): string
+    {
+        return strtoupper($this->value);
+    }
+
     public function isTkGroup(): bool
     {
         return str_starts_with($this->value, 'tk');

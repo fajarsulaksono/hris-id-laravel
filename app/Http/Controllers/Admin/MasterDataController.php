@@ -83,8 +83,11 @@ class MasterDataController extends BaseController
 
         $data = $this->validated($module, $request, null);
         $data = $this->transform($module, $data);
+        $data = $this->withoutMediaFields($module, $data);
 
-        ($module['model'])::create($data);
+        $model = ($module['model'])::create($data);
+
+        $this->handleMediaFields($module, $request, $model);
 
         return redirect()->route($this->routeName($request, 'index'))
             ->with('success', "{$module['title']} berhasil ditambahkan.");
@@ -101,7 +104,7 @@ class MasterDataController extends BaseController
         ]);
     }
 
-public function edit(Request $request, string $id): View
+    public function edit(Request $request, string $id): View
     {
         $module = $this->module($request);
         $model = $this->resolve($module, $id);
@@ -122,7 +125,9 @@ public function edit(Request $request, string $id): View
 
         $model = $this->resolve($module, $id);
 
-        $model->update($this->transform($module, $this->validated($module, $request, $model)));
+        $model->update($this->withoutMediaFields($module, $this->transform($module, $this->validated($module, $request, $model))));
+
+        $this->handleMediaFields($module, $request, $model);
 
         return redirect()->route($this->routeName($request, 'index'))
             ->with('success', "{$module['title']} berhasil diperbarui.");
@@ -151,7 +156,11 @@ public function edit(Request $request, string $id): View
     {
         $module = $this->module($request);
 
-        ($module['model'])::withTrashed()->findOrFail($id)->forceDelete();
+        $model = ($module['model'])::withTrashed()->findOrFail($id);
+
+        $this->clearMediaFields($module, $model);
+
+        $model->forceDelete();
 
         return redirect()->back()->with('success', "{$module['title']} dihapus permanen.");
     }
@@ -229,6 +238,10 @@ public function edit(Request $request, string $id): View
             if (($field['type'] ?? 'text') === 'email') {
                 $fieldRules[] = 'email';
             }
+            if (($field['type'] ?? 'text') === 'image') {
+                $fieldRules[] = 'image';
+                $fieldRules[] = 'max:2048';
+            }
             if (isset($field['max'])) {
                 $fieldRules[] = "max:{$field['max']}";
             }
@@ -236,7 +249,7 @@ public function edit(Request $request, string $id): View
                 $fieldRules[] = Rule::in(array_column($field['options'], 'value'));
             }
             if (! empty($field['model'])) {
-                $fieldRules[] = 'exists:'.(new $field['model']())->getTable().',id';
+                $fieldRules[] = 'exists:'.(new $field['model'])->getTable().',id';
             }
             if (! empty($field['unique'])) {
                 $fieldRules[] = $this->uniqueRule($module, $field, $model);
@@ -252,7 +265,7 @@ public function edit(Request $request, string $id): View
 
     protected function uniqueRule(array $module, array $field, ?Model $model): \Illuminate\Contracts\Validation\Rule|Rule|string
     {
-        $table = (new $module['model']())->getTable();
+        $table = (new $module['model'])->getTable();
 
         if (is_array($field['unique'])) {
             [$table, $columns] = $field['unique'];
@@ -302,5 +315,49 @@ public function edit(Request $request, string $id): View
         }
 
         return $data;
+    }
+
+    protected function mediaFields(array $module): array
+    {
+        return collect($module['fields'])
+            ->whereIn('type', ['image', 'file'])
+            ->map(fn (array $field) => $field + ['collection' => $field['collection'] ?? 'profile'])
+            ->values()
+            ->all();
+    }
+
+    protected function withoutMediaFields(array $module, array $data): array
+    {
+        foreach ($this->mediaFields($module) as $field) {
+            unset($data[$field['name']]);
+        }
+
+        return $data;
+    }
+
+    protected function handleMediaFields(array $module, Request $request, Model $model): void
+    {
+        if (! method_exists($model, 'addMediaFromRequest')) {
+            return;
+        }
+
+        foreach ($this->mediaFields($module) as $field) {
+            if (! $request->hasFile($field['name'])) {
+                continue;
+            }
+
+            $model->clearMediaCollection($field['collection']);
+            $model->addMediaFromRequest($field['name'])
+                ->toMediaCollection($field['collection']);
+        }
+    }
+
+    protected function clearMediaFields(array $module, Model $model): void
+    {
+        foreach ($this->mediaFields($module) as $field) {
+            if (method_exists($model, 'clearMediaCollection')) {
+                $model->clearMediaCollection($field['collection']);
+            }
+        }
     }
 }

@@ -50,4 +50,9 @@ class Contract extends Model
     {
         return $this->getTypeText();
     }
+
+    public function getDisplayAttribute(): string
+    {
+        return sprintf('%s - %s', $this->letter_number, $this->subject);
+    }
 }

@@ -24,16 +24,14 @@ class SupervisorChecker
 
     private function canSupervise(Employee $employee, Employee $supervisor): bool
     {
-        $allow = false;
-
         if ($employeeSupervisor = $employee->supervisor) {
             if ($employeeSupervisor->id === $supervisor->id) {
-                $allow = true;
-            } else {
-                $this->canSupervise($employeeSupervisor, $supervisor);
+                return true;
             }
+
+            return $this->canSupervise($employeeSupervisor, $supervisor);
         }
 
-        return $allow;
+        return false;
     }
 }

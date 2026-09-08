@@ -70,4 +70,34 @@ class CareerHistory extends Model
     {
         return $this->belongsTo(Contract::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getCompanyNameAttribute(): ?string
+    {
+        return $this->company?->name;
+    }
+
+    public function getDepartmentNameAttribute(): ?string
+    {
+        return $this->department?->name;
+    }
+
+    public function getJobLevelNameAttribute(): ?string
+    {
+        return $this->jobLevel?->name;
+    }
+
+    public function getJobTitleNameAttribute(): ?string
+    {
+        return $this->jobTitle?->name;
+    }
+
+    public function getSupervisorNameAttribute(): ?string
+    {
+        return $this->supervisor?->display;
+    }
 }

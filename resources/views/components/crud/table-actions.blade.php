@@ -11,6 +11,12 @@
             <i class="ti ti-eye"></i>
         </a>
 
+        @if ($module['key'] === 'employees')
+            <a href="{{ route($base.'.profile', $row) }}" class="btn btn-icon btn-outline-info" title="Profil Karyawan">
+                <i class="ti ti-user"></i>
+            </a>
+        @endif
+
         @can('manage_'.$menu)
             <a href="{{ route($base.'.edit', $row) }}" class="btn btn-icon btn-outline-primary" title="Ubah">
                 <i class="ti ti-pencil"></i>

@@ -3,6 +3,14 @@
 namespace App\Providers;
 
 use App\Models\Employee\Employee;
+use App\Models\Employee\EmployeeAddress;
+use App\Models\Employee\Mutation;
+use App\Models\Employee\Placement;
+use App\Observers\EmployeeAddressObserver;
+use App\Observers\EmployeeObserver;
+use App\Observers\MutationObserver;
+use App\Observers\PlacementObserver;
+use App\Policies\EmployeePolicy;
 use App\Support\Security;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Employee::observe(EmployeeObserver::class);
+        Placement::observe(PlacementObserver::class);
+        Mutation::observe(MutationObserver::class);
+        EmployeeAddress::observe(EmployeeAddressObserver::class);
+
+        Gate::policy(Employee::class, EmployeePolicy::class);
+
         Gate::before(function (Authenticatable $user, string $ability) {
             if (! $user instanceof Employee) {
                 return null;

@@ -26,11 +26,29 @@
             <label class="form-check-label" for="{{ $name }}">{{ $field['label'] }}</label>
         </div>
 
+    @elseif ($type === 'image')
+        @php
+            $collection = $field['collection'] ?? 'profile';
+            $media = $model?->getMedia($collection)->first();
+        @endphp
+        @if ($media)
+            <div class="mb-2">
+                <img src="{{ $media->getUrl() }}" alt="Preview" class="img-thumbnail" style="max-height: 140px">
+            </div>
+        @endif
+        <input type="file" class="form-control @if ($isInvalid) is-invalid @endif"
+               id="{{ $name }}" name="{{ $name }}" accept="image/*"
+               @if (! empty($field['required'])) required @endif>
+        @if ($media)
+            <div class="form-text">Kosongkan untuk mempertahankan foto saat ini.</div>
+        @endif
+
     @elseif ($type === 'select')
         @php
             $dependsType = match (($field['model'] ?? null)) {
                 \App\Models\Master\City::class => 'city',
                 \App\Models\Company\Department::class => 'department-by-company',
+                \App\Models\Company\JobTitle::class => 'job-title-by-level',
                 default => null,
             };
         @endphp
@@ -49,7 +67,11 @@
                 @endforeach
             @elseif (isset($field['model']) && empty($field['dependsOn']))
                 @php
-                    $options = collect($field['model']::orderBy('name')->get())
+                    $modelClass = $field['model'];
+                    $table = (new $modelClass)->getTable();
+                    $sortColumn = \Illuminate\Support\Facades\Schema::hasColumn($table, 'name') ? 'name' :
+                        (\Illuminate\Support\Facades\Schema::hasColumn($table, 'full_name') ? 'full_name' : null);
+                    $options = collect($modelClass::orderBy($sortColumn ?? 'id')->get())
                         ->map(fn ($item) => ['id' => $item->getKey(), 'text' => $field['text'] === 'display' ? $item->display : $item->{$field['text']}])
                         ->sortBy('text');
                 @endphp
