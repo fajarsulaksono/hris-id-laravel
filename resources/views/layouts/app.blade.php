@@ -54,7 +54,7 @@
         }
         .app-sidebar .sidebar-brand {
             border-bottom: none;
-            background-color: #b45309;
+            background-color: darkred;
         }
         .app-sidebar .sidebar-brand .brand-image {
             display: none;
@@ -250,8 +250,39 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon ti ti-clock-hour-4"></i>
-                            <p>Absensi</p>
+                            <p>
+                                Absensi
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @foreach (\App\Support\MasterModules::byMenu('attendance') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
+                            <li class="nav-item">
+                                <a href="{{ route('admin.attendance.attendances.upload') }}" class="nav-link">
+                                    <i class="ti ti-upload nav-icon"></i>
+                                    <p>Upload CSV</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.attendance.attendances.process') }}" class="nav-link">
+                                    <i class="ti ti-calendar-stats nav-icon"></i>
+                                    <p>Proses Bulanan</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.attendance.attendances.recap') }}" class="nav-link">
+                                    <i class="ti ti-report-analytics nav-icon"></i>
+                                    <p>Rekap</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endcan
 
@@ -259,8 +290,33 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon ti ti-clock-bolt"></i>
-                            <p>Lembur</p>
+                            <p>
+                                Lembur
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @foreach (\App\Support\MasterModules::byMenu('overtime') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
+                            <li class="nav-item">
+                                <a href="{{ route('admin.overtime.overtimes.upload') }}" class="nav-link">
+                                    <i class="ti ti-upload nav-icon"></i>
+                                    <p>Upload CSV</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.overtime.overtimes.process') }}" class="nav-link">
+                                    <i class="ti ti-calendar-stats nav-icon"></i>
+                                    <p>Proses Bulanan</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endcan
 
@@ -268,8 +324,21 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="nav-icon ti ti-plane"></i>
-                            <p>Cuti</p>
+                            <p>
+                                Cuti
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @foreach (\App\Support\MasterModules::byMenu('leave') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                        <i class="ti ti-circle nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
                     </li>
                     @endcan
 

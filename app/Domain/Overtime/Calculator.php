@@ -25,7 +25,7 @@ abstract class Calculator implements OvertimeCalculatorInterface
         $endHour = \DateTime::createFromFormat(
             config('hris.format.date_time'),
             sprintf('%s %s',
-                date(config('hris.format.query_date')),
+                date(config('hris.format.date')),
                 $overtime->end_hour
             )
         );
@@ -33,7 +33,7 @@ abstract class Calculator implements OvertimeCalculatorInterface
         $startHour = \DateTime::createFromFormat(
             config('hris.format.date_time'),
             sprintf('%s %s',
-                date(config('hris.format.query_date')),
+                date(config('hris.format.date')),
                 $overtime->start_hour
             )
         );

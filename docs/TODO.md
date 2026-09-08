@@ -57,10 +57,15 @@ Simbol: `[x]` selesai, `[ ]` belum, `[-]` sebagian/sebagian besar selesai.
 
 - [x] Model: `Shiftment`, `Workshift`, `Attendance`, `AttendanceSummary`, `Overtime`, `Leave`
 - [x] Port Overtime calculator: `WorkdayCalculator`, `HolidayCalculator` + base `Calculator` (app/Domain/Overtime)
-- [ ] Port Attendance domain: Rule chain, Importer CSV, Processor, Summary
-- [ ] Observer: workshift slicing overlap; absent-otomatis saat cuti submit (`SetAbsentWhenLeaveIsSubmited`)
-- [ ] Halaman upload CSV (attendance & overtime), proses bulanan, rekap dengan hari libur
-- [ ] Validasi periode: bulan tidak melewati periode berjalan / periode tutup
+- [x] Port Overtime domain lengkap: `OvertimeCalculator` (chain), `OvertimeChecker`, `OvertimeCalculatorService`, `OvertimeImporter`, `OvertimeProcessor` (marker `PROCESSED#`, simpan via `saveQuietly` agar observer tidak men-strip marker)
+- [x] Port Attendance domain: Rule chain (`AttendanceRule` + `RuleInterface` + `NotQualifiedException`), `AttendanceCalculator`, `WorkshiftFinder`, `WorkshiftSlicer` (`SLICED BY SYSTEM`), `HolidayChecker`, `WorkdayCalculator`, `AttendanceImporter` (CSV), `AttendanceProcessor` (full/partial bulan, absent default reason), `AttendanceSummaryCalculator`, `ValidateAttendance`
+- [x] Validasi periode: `PeriodValidator` menolak bulan melewati periode berjalan atau ≤ `hris.attendance.closed_through` (`InvalidAttendancePeriodException`)
+- [x] Observer: workshift slicing overlap; absent-otomatis saat cuti submit (`SetAbsentWhenLeaveIsSubmited`); hitung attendance & overtime otomatis saat simpan; auto-approve lembur (`hris.overtime.auto_approved`)
+- [x] Modul CRUD `attendances`, `attendance-summaries`, `overtimes`, `leaves` (MasterModules + accessor `employee_name`/`shiftment_name`/`reason_name`/`approved_by_name`) + rute statis di `routes/web.php` (upload/process/recap didaftarkan sebelum rute `/{id}`)
+- [x] Halaman upload CSV (attendance & overtime), proses bulanan, rekap dengan hari libur & akhir pekan (sidebar treeview menu Absensi/Lembur/Cuti)
+- [x] `config/hris.php`: `attendance.closed_through` (+ env `HRIS_ATTENDANCE_CLOSED_THROUGH`)
+- [x] Tes: 15 file unit domain (Attendance/Leave/Overtime) + `AttendanceWorkflowTest` feature (guest redirect, upload CSV, validasi error, proses bulanan, rekap, upload lembur) — 81 tes / 272 asersi
+- [ ] Perbaikan kecil jika ditemukan saat integrasi dengan Fase 4 (rekap & summary memakai approved overtime)
 
 ## Fase 4 — Payroll, BPJS, Pajak (paling kritis)
 

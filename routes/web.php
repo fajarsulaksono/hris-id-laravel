@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\MasterDataController;
+use App\Http\Controllers\Admin\OvertimeController;
 use App\Http\Controllers\Api\DependencyOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -53,6 +55,22 @@ Route::middleware('auth')->group(function () {
                     $d(Route::post('/', [MasterDataController::class, 'store']))->name('store');
                     $d(Route::get('/create', [MasterDataController::class, 'create']))->name('create');
                     $d(Route::get('/trash', [MasterDataController::class, 'trash']))->name('trash');
+
+                    if ($key === 'attendances') {
+                        $d(Route::get('/upload', [AttendanceController::class, 'uploadForm']))->name('upload');
+                        $d(Route::post('/upload', [AttendanceController::class, 'storeUpload']))->name('upload.store');
+                        $d(Route::get('/process', [AttendanceController::class, 'processForm']))->name('process');
+                        $d(Route::post('/process', [AttendanceController::class, 'process']))->name('process.store');
+                        $d(Route::get('/recap', [AttendanceController::class, 'recap']))->name('recap');
+                    }
+
+                    if ($key === 'overtimes') {
+                        $d(Route::get('/upload', [OvertimeController::class, 'uploadForm']))->name('upload');
+                        $d(Route::post('/upload', [OvertimeController::class, 'storeUpload']))->name('upload.store');
+                        $d(Route::get('/process', [OvertimeController::class, 'processForm']))->name('process');
+                        $d(Route::post('/process', [OvertimeController::class, 'process']))->name('process.store');
+                    }
+
                     $d(Route::get('/{id}', [MasterDataController::class, 'show']))->name('show');
                     $d(Route::get('/{id}/edit', [MasterDataController::class, 'edit']))->name('edit');
 

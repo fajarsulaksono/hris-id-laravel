@@ -93,6 +93,8 @@ return [
         'upload_path' => env('HRIS_ATTENDANCE_UPLOAD_PATH', '/attendances'),
         'cut_off_date' => (int) env('HRIS_ATTENDANCE_CUT_OFF_DATE', -1),
         'default_absent_reason_code' => env('HRIS_ATTENDANCE_DEFAULT_ABSENT_REASON_CODE', 'ABS'),
+        // Periode (YYYY-MM) yang sudah ditutup; bulan ≤ nilai ini ditolak saat proses.
+        'closed_through' => env('HRIS_ATTENDANCE_CLOSED_THROUGH'),
     ],
 
     'overtime' => [

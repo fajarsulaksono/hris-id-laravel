@@ -44,4 +44,14 @@ class Leave extends Model
     {
         return $this->belongsTo(Reason::class);
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getReasonNameAttribute(): ?string
+    {
+        return $this->reason?->name;
+    }
 }

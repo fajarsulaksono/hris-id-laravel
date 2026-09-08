@@ -30,6 +30,11 @@ use App\Models\Master\Reason;
 use App\Models\Master\Region;
 use App\Models\Master\Skill;
 use App\Models\Master\SkillGroup;
+use App\Models\Attendance\Attendance;
+use App\Models\Attendance\AttendanceSummary;
+use App\Models\Attendance\Leave;
+use App\Models\Attendance\Overtime;
+use App\Models\Attendance\Shiftment;
 
 final class MasterModules
 {
@@ -485,6 +490,124 @@ final class MasterModules
                     self::field('description', 'Keterangan', 'text', max: 11, required: true, upcase: true),
                 ],
             ),
+
+            'attendances' => self::module(
+                title: 'Absensi',
+                menu: 'attendance',
+                model: Attendance::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'attendance_date', 'title' => 'Tanggal'],
+                    ['data' => 'shiftment_name', 'title' => 'Shift'],
+                    ['data' => 'check_in', 'title' => 'Masuk'],
+                    ['data' => 'check_out', 'title' => 'Keluar'],
+                    ['data' => 'absent', 'title' => 'Absen', 'render' => 'bool'],
+                ],
+                searchable: ['attendance_date'],
+                order: ['attendance_date', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    self::field('attendance_date', 'Tanggal', 'date', required: true,
+                        unique: ['attendances', ['employee_id', 'attendance_date']]),
+                    ['name' => 'shiftment_id', 'label' => 'Shift', 'type' => 'select',
+                        'model' => Shiftment::class, 'text' => 'name', 'nullable' => true],
+                    self::field('check_in', 'Jam Masuk', 'text'),
+                    self::field('check_out', 'Jam Keluar', 'text'),
+                    ['name' => 'absent', 'label' => 'Absen', 'type' => 'checkbox'],
+                    ['name' => 'reason_id', 'label' => 'Alasan', 'type' => 'select',
+                        'model' => Reason::class, 'text' => 'name', 'nullable' => true],
+                    self::field('description', 'Keterangan', 'textarea'),
+                ],
+            ),
+
+            'attendance-summaries' => self::module(
+                title: 'Rekap Absensi',
+                menu: 'attendance',
+                model: AttendanceSummary::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'year', 'title' => 'Tahun'],
+                    ['data' => 'month', 'title' => 'Bulan'],
+                    ['data' => 'total_workday', 'title' => 'Hari Kerja'],
+                    ['data' => 'total_in', 'title' => 'Hadir'],
+                    ['data' => 'total_absent', 'title' => 'Absen'],
+                    ['data' => 'total_loyality', 'title' => 'Loyalitas'],
+                    ['data' => 'total_overtime', 'title' => 'Lembur'],
+                ],
+                searchable: ['year', 'month'],
+                order: ['year', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    self::field('year', 'Tahun', 'text', max: 4, required: true),
+                    self::field('month', 'Bulan', 'text', max: 2, required: true),
+                    self::field('total_workday', 'Hari Kerja', 'text', max: 2),
+                    self::field('total_in', 'Hadir', 'text', max: 2),
+                    self::field('total_loyality', 'Loyalitas', 'text', max: 4),
+                    self::field('total_absent', 'Absen', 'text', max: 2),
+                    self::field('total_overtime', 'Lembur', 'text', max: 4),
+                ],
+            ),
+
+            'overtimes' => self::module(
+                title: 'Lembur',
+                menu: 'overtime',
+                model: Overtime::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'overtime_date', 'title' => 'Tanggal'],
+                    ['data' => 'start_hour', 'title' => 'Mulai'],
+                    ['data' => 'end_hour', 'title' => 'Selesai'],
+                    ['data' => 'raw_value', 'title' => 'Jam'],
+                    ['data' => 'calculated_value', 'title' => 'Nilai'],
+                    ['data' => 'holiday', 'title' => 'Libur', 'render' => 'bool'],
+                ],
+                searchable: ['overtime_date'],
+                order: ['overtime_date', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    self::field('overtime_date', 'Tanggal', 'date', required: true,
+                        unique: ['overtimes', ['employee_id', 'overtime_date']]),
+                    ['name' => 'shiftment_id', 'label' => 'Shift', 'type' => 'select',
+                        'model' => Shiftment::class, 'text' => 'name', 'nullable' => true],
+                    self::field('start_hour', 'Mulai', 'text', required: true),
+                    self::field('end_hour', 'Selesai', 'text', required: true),
+                    self::field('description', 'Keterangan', 'textarea'),
+                    self::field('raw_value', 'Jam', 'text'),
+                    self::field('calculated_value', 'Nilai', 'text'),
+                    ['name' => 'holiday', 'label' => 'Hari Libur', 'type' => 'checkbox'],
+                    ['name' => 'overday', 'label' => 'Lintas Hari', 'type' => 'checkbox'],
+                    ['name' => 'approved_by_id', 'label' => 'Disetujui Oleh', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'nullable' => true],
+                ],
+            ),
+
+            'leaves' => self::module(
+                title: 'Cuti',
+                menu: 'leave',
+                model: Leave::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'leave_date', 'title' => 'Tanggal'],
+                    ['data' => 'reason_name', 'title' => 'Alasan'],
+                    ['data' => 'amount', 'title' => 'Jumlah Hari'],
+                    ['data' => 'description', 'title' => 'Keterangan'],
+                ],
+                searchable: ['leave_date'],
+                order: ['leave_date', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    self::field('leave_date', 'Tanggal', 'date', required: true,
+                        unique: ['leaves', ['employee_id', 'leave_date']]),
+                    ['name' => 'reason_id', 'label' => 'Alasan', 'type' => 'select',
+                        'model' => Reason::class, 'text' => 'name', 'required' => true],
+                    self::field('amount', 'Jumlah Hari', 'text', max: 2, required: true),
+                    self::field('description', 'Keterangan', 'textarea'),
+                ],
+            ),
         ];
     }
 
@@ -510,7 +633,14 @@ final class MasterModules
 
     public static function menuRoles(): array
     {
-        return ['master' => 'master_menu', 'company' => 'company_menu', 'employee' => 'employee_menu'];
+        return [
+            'master' => 'master_menu',
+            'company' => 'company_menu',
+            'employee' => 'employee_menu',
+            'attendance' => 'attendance_menu',
+            'overtime' => 'overtime_menu',
+            'leave' => 'leave_menu',
+        ];
     }
 
     private static function module(

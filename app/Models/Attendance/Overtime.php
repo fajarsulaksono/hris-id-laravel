@@ -57,4 +57,19 @@ class Overtime extends Model
     {
         return $this->belongsTo(Employee::class, 'approved_by_id');
     }
+
+    public function getEmployeeNameAttribute(): ?string
+    {
+        return $this->employee?->display;
+    }
+
+    public function getShiftmentNameAttribute(): ?string
+    {
+        return $this->shiftment?->name;
+    }
+
+    public function getApprovedByNameAttribute(): ?string
+    {
+        return $this->approvedBy?->display;
+    }
 }
