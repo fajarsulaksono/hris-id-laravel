@@ -27,8 +27,6 @@ Screenshots below were captured against a freshly seeded demo database (`php art
 
 ![Masuk — Layar Besar (3/4 + 1/4)](docs/screenshots/authentication/login.png)
 
-![Masuk — Layar Sedang (2/3 + 1/3)](docs/screenshots/authentication/login-md.png)
-
 ### EMPLOYEE — Budi Santoso (`budi.santoso`)
 
 > Regular employee: **Dashboard** plus **Data Saya** (self-service) — own profile, own attendance, leave request/history, and payslip download.
