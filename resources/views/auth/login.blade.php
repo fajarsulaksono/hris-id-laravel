@@ -32,6 +32,11 @@
                 <span class="input-group-text bg-white"><i class="ti ti-lock"></i></span>
                 <input type="password" class="form-control" id="password" name="password"
                        placeholder="Kata sandi" required>
+                <button type="button" class="btn password-toggle" data-password-toggle
+                        aria-label="Tampilkan kata sandi" aria-pressed="false">
+                    <i class="ti ti-eye"></i>
+                    <i class="ti ti-eye-off d-none"></i>
+                </button>
             </div>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-4">

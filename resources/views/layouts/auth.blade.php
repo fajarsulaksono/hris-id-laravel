@@ -83,7 +83,23 @@
             color: #111827;
             text-decoration: underline;
         }
-        @media (max-width: 991.98px) {
+        .password-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-left: 0;
+            border-radius: 0 .375rem .375rem 0;
+            padding: 0 .65rem;
+            transition: color .15s ease, background-color .15s ease;
+        }
+        .password-toggle:hover {
+            color: #111827;
+            background-color: #f8f9fa;
+        }
+        @media (max-width: 767.98px) {
             .auth-image {
                 display: none !important;
             }
@@ -95,10 +111,10 @@
     @stack('styles')
 </head>
 <body class="bg-body-tertiary">
-<div class="auth-split d-flex flex-column flex-lg-row">
+<div class="auth-split d-flex flex-column flex-md-row">
 
-    <!-- Layout Left: 3/4 width -->
-    <div class="auth-image d-none d-lg-block col-lg-9">
+    <!-- Layout Left: 2/3 (md) or 3/4 (lg) width -->
+    <div class="auth-image d-none d-md-block col-md-8 col-lg-9">
         <div class="auth-overlay">
             <div>
                 <div class="auth-brand">HRIS <span class="fw-light">Indonesia</span></div>
@@ -115,8 +131,8 @@
         </div>
     </div>
 
-    <!-- Layout Right: 1/4 width -->
-    <main class="auth-panel d-flex align-items-center justify-content-center col-lg-3 px-3 py-4">
+    <!-- Layout Right: 1/3 (md) or 1/4 (lg) width -->
+    <main class="auth-panel d-flex align-items-center justify-content-center col-md-4 col-lg-3 px-4 py-5">
         <div class="auth-panel-inner">
             <div class="text-center mb-4">
                 <a href="{{ route('login') }}" class="auth-logo text-decoration-none">
@@ -131,6 +147,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/password-toggle.js') }}"></script>
 @stack('scripts')
 </body>
 </html>

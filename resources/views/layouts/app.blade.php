@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/css/dataTables.bootstrap5.min.css">
     <!-- HRIS Sidebar -->
     <link rel="stylesheet" href="{{ asset('css/hris-sidebar.css') }}">
+    <!-- HRIS Breadcrumb -->
+    <link rel="stylesheet" href="{{ asset('css/hris-breadcrumb.css') }}">
     <style>
         :root {
             font-size: 15px;
@@ -171,7 +173,7 @@
                             <img src="{{ auth()->user()->avatar }}" class="rounded-circle shadow" alt="{{ auth()->user()->full_name }}">
                             <p>
                                 {{ auth()->user()->full_name }}
-                                <small>Member since {{ auth()->user()->created_at?->format('M. Y') }}</small>
+                                <small>{{ auth()->user()->roles_text }}</small>
                             </p>
                         </li>
                         <li class="user-footer">
