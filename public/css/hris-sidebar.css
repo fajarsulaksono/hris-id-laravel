@@ -1,0 +1,46 @@
+/*
+ * HRIS Sidebar – active / selected state
+ * Uses AdminLTE 4 CSS-variable overrides so colours adapt to light & dark themes.
+ */
+
+/* ── Light theme ─────────────────────────────────────────────── */
+.app-sidebar {
+  --lte-sidebar-menu-active-bg: rgba(59, 130, 246, 0.18);
+  --lte-sidebar-menu-active-color: #ffffff;
+
+  --lte-sidebar-submenu-active-bg: rgba(59, 130, 246, 0.12);
+  --lte-sidebar-submenu-active-color: #ffffff;
+}
+
+/* ── Dark theme ──────────────────────────────────────────────── */
+[data-bs-theme="dark"] .app-sidebar,
+[data-bs-theme="dark"].app-sidebar {
+  --lte-sidebar-menu-active-bg: rgba(96, 165, 250, 0.22);
+  --lte-sidebar-menu-active-color: #ffffff;
+
+  --lte-sidebar-submenu-active-bg: rgba(96, 165, 250, 0.16);
+  --lte-sidebar-submenu-active-color: #ffffff;
+}
+
+/* ── Transition on hover / active ────────────────────────────── */
+.sidebar-menu .nav-link {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* ── Brand: center "HRIS Indonesia" with two-tone colour ─────── */
+.app-sidebar .sidebar-brand .brand-link {
+  justify-content: center;
+}
+
+.app-sidebar .sidebar-brand .brand-text {
+  text-align: center;
+  margin-left: 0;
+}
+
+.app-sidebar .sidebar-brand .brand-word-hris {
+  color: var(--bs-orange);
+}
+
+.app-sidebar .sidebar-brand .brand-word-id {
+  color: #ffffff;
+}

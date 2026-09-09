@@ -252,6 +252,28 @@ class Employee extends Authenticatable implements HasMedia
         return sprintf('%s - %s', $this->code, $this->full_name);
     }
 
+    public function getAvatarAttribute(): string
+    {
+        $male = [
+            'user1-128x128-male.jpg',
+            'user2-160x160-male.jpg',
+            'user6-128x128-male.jpg',
+            'user8-128x128-male.jpg',
+        ];
+
+        $female = [
+            'user3-128x128-female.jpg',
+            'user5-128x128-female.jpg',
+            'user7-128x128-female.jpg',
+        ];
+
+        $pool = $this->gender === Gender::FEMALE ? $female : $male;
+        $index = abs(crc32((string) $this->id)) % count($pool);
+        $name = $pool[$index] ?? $pool[0];
+
+        return asset('images/avatar/'.$name);
+    }
+
     public function getNameAttribute(): string
     {
         return $this->full_name ?? (string) $this->code;

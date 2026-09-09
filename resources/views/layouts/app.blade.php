@@ -18,6 +18,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@4/dist/css/adminlte.min.css">
     <!-- DataTables 2.x -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/css/dataTables.bootstrap5.min.css">
+    <!-- HRIS Sidebar -->
+    <link rel="stylesheet" href="{{ asset('css/hris-sidebar.css') }}">
     <style>
         :root {
             font-size: 15px;
@@ -160,29 +162,17 @@
                     </a>
                 </li>
                 <li class="nav-item dropdown user-menu">
-                    <a class="nav-link" data-bs-toggle="dropdown" href="#">
-                        <i class="ti ti-user-circle"></i>
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                        <img src="{{ auth()->user()->avatar }}" class="user-image rounded-circle shadow" alt="{{ auth()->user()->full_name }}">
+                        <span class="d-none d-md-inline">{{ auth()->user()->full_name }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                        <li class="user-header text-bg-primary">
-                            <i class="ti ti-user-circle" style="font-size: 5.5rem; line-height: 1.2;"></i>
+                        <li class="user-header text-bg-secondary">
+                            <img src="{{ auth()->user()->avatar }}" class="rounded-circle shadow" alt="{{ auth()->user()->full_name }}">
                             <p>
                                 {{ auth()->user()->full_name }}
                                 <small>Member since {{ auth()->user()->created_at?->format('M. Y') }}</small>
                             </p>
-                        </li>
-                        <li class="user-body">
-                            <div class="row">
-                                <div class="col-4 text-center">
-                                    <a href="#">Follow</a>
-                                </div>
-                                <div class="col-4 text-center">
-                                    <a href="#">Sales</a>
-                                </div>
-                                <div class="col-4 text-center">
-                                    <a href="#">Friends</a>
-                                </div>
-                            </div>
                         </li>
                         <li class="user-footer">
                             <a href="#" class="btn btn-outline-secondary">Profile</a>
@@ -204,7 +194,9 @@
         <div class="sidebar-brand">
             <a href="{{ route('dashboard') }}" class="brand-link">
                 <img src="{{ asset('images/hris-logo.svg') }}" alt="HRIS Logo" class="brand-image opacity-75 shadow">
-                <span class="brand-text fw-bold fst-italic">HRIS Indonesia</span>
+                <span class="brand-text fw-bold fst-italic">
+                    <span class="brand-word-hris">HRIS</span>&nbsp;<span class="brand-word-id">Indonesia</span>
+                </span>
                 <span class="brand-text-short fw-bold fst-italic">HRIS</span>
             </a>
         </div>
@@ -219,17 +211,21 @@
 
         <div class="sidebar-wrapper">
             <nav class="mt-2">
+                @php
+                    $ap  = $activeMenuPrefix;
+                    $aEq = fn (?string $segment) => $ap === $segment;
+                @endphp
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false" id="navigation">
                     <li class="nav-item">
-                        <a href="{{ route('dashboard') }}" class="nav-link">
+                        <a href="{{ route('dashboard') }}" class="nav-link {{ $aEq(null) ? 'active' : '' }}">
                             <i class="nav-icon ti ti-dashboard"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
 
                     @can('view_master')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('master') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('master') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-database"></i>
                             <p>
                                 Master
@@ -239,7 +235,7 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('master') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
@@ -250,8 +246,8 @@
                     @endcan
 
                     @can('view_company')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('company') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('company') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-building"></i>
                             <p>
                                 Perusahaan
@@ -261,7 +257,7 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('company') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
@@ -272,8 +268,8 @@
                     @endcan
 
                     @can('view_employee')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('employee') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('employee') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-users"></i>
                             <p>
                                 Karyawan
@@ -283,7 +279,7 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('employee') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
@@ -294,8 +290,8 @@
                     @endcan
 
                     @can('view_address')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('address') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('address') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-map-pin"></i>
                             <p>Alamat</p>
                         </a>
@@ -303,8 +299,8 @@
                     @endcan
 
                     @can('view_attendance')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('attendance') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('attendance') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-clock-hour-4"></i>
                             <p>
                                 Absensi
@@ -314,26 +310,26 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('attendance') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
                                 </li>
                             @endforeach
                             <li class="nav-item">
-                                <a href="{{ route('admin.attendance.attendances.upload') }}" class="nav-link">
+                                <a href="{{ route('admin.attendance.attendances.upload') }}" class="nav-link {{ request()->routeIs('admin.attendance.attendances.upload') ? 'active' : '' }}">
                                     <i class="ti ti-upload nav-icon"></i>
                                     <p>Upload CSV</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.attendance.attendances.process') }}" class="nav-link">
+                                <a href="{{ route('admin.attendance.attendances.process') }}" class="nav-link {{ request()->routeIs('admin.attendance.attendances.process') ? 'active' : '' }}">
                                     <i class="ti ti-calendar-stats nav-icon"></i>
                                     <p>Proses Bulanan</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.attendance.attendances.recap') }}" class="nav-link">
+                                <a href="{{ route('admin.attendance.attendances.recap') }}" class="nav-link {{ request()->routeIs('admin.attendance.attendances.recap') ? 'active' : '' }}">
                                     <i class="ti ti-report-analytics nav-icon"></i>
                                     <p>Rekap</p>
                                 </a>
@@ -343,8 +339,8 @@
                     @endcan
 
                     @can('view_overtime')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('overtime') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('overtime') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-clock-bolt"></i>
                             <p>
                                 Lembur
@@ -354,20 +350,20 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('overtime') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
                                 </li>
                             @endforeach
                             <li class="nav-item">
-                                <a href="{{ route('admin.overtime.overtimes.upload') }}" class="nav-link">
+                                <a href="{{ route('admin.overtime.overtimes.upload') }}" class="nav-link {{ request()->routeIs('admin.overtime.overtimes.upload') ? 'active' : '' }}">
                                     <i class="ti ti-upload nav-icon"></i>
                                     <p>Upload CSV</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.overtime.overtimes.process') }}" class="nav-link">
+                                <a href="{{ route('admin.overtime.overtimes.process') }}" class="nav-link {{ request()->routeIs('admin.overtime.overtimes.process') ? 'active' : '' }}">
                                     <i class="ti ti-calendar-stats nav-icon"></i>
                                     <p>Proses Bulanan</p>
                                 </a>
@@ -377,8 +373,8 @@
                     @endcan
 
                     @can('view_leave')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('leave') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('leave') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-plane"></i>
                             <p>
                                 Cuti
@@ -388,7 +384,7 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('leave') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
@@ -399,8 +395,8 @@
                     @endcan
 
                     @can('view_payroll')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('payroll') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('payroll') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-wallet"></i>
                             <p>
                                 Penggajian
@@ -410,26 +406,26 @@
                         <ul class="nav nav-treeview">
                             @foreach (\App\Support\MasterModules::byMenu('payroll') as $module)
                                 <li class="nav-item">
-                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
                                         <i class="ti ti-circle nav-icon"></i>
                                         <p>{{ $module['title'] }}</p>
                                     </a>
                                 </li>
                             @endforeach
                             <li class="nav-item">
-                                <a href="{{ route('admin.payroll.payrolls.process') }}" class="nav-link">
+                                <a href="{{ route('admin.payroll.payrolls.process') }}" class="nav-link {{ request()->routeIs('admin.payroll.payrolls.process') ? 'active' : '' }}">
                                     <i class="ti ti-calendar-stats nav-icon"></i>
                                     <p>Proses Payroll</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.payroll.payrolls.tax') }}" class="nav-link">
+                                <a href="{{ route('admin.payroll.payrolls.tax') }}" class="nav-link {{ request()->routeIs('admin.payroll.payrolls.tax') ? 'active' : '' }}">
                                     <i class="ti ti-report-money nav-icon"></i>
                                     <p>Proses Pajak</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.payroll.payrolls.recap') }}" class="nav-link">
+                                <a href="{{ route('admin.payroll.payrolls.recap') }}" class="nav-link {{ request()->routeIs('admin.payroll.payrolls.recap') ? 'active' : '' }}">
                                     <i class="ti ti-table-export nav-icon"></i>
                                     <p>Rekap Penggajian</p>
                                 </a>
@@ -439,8 +435,8 @@
                     @endcan
 
                     @can('view_user')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('user') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('user') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-user-shield"></i>
                             <p>Manajemen User</p>
                         </a>
@@ -448,8 +444,8 @@
                     @endcan
 
                     @can('view_config')
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
+                    <li class="nav-item {{ $aEq('config') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $aEq('config') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-settings"></i>
                             <p>Konfigurasi</p>
                         </a>

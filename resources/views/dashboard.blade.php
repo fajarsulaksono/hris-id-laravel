@@ -170,7 +170,7 @@
                             { name: 'Absen', data: data.attendance.absent },
                         ],
                         colors: ['#16a34a', '#dc2626'],
-                        stroke: { curve: 'smooth', width: 2 },
+                        stroke: { curve: 'straight', width: 2 },
                         fill: { type: 'gradient', gradient: { opacityFrom: 0.45, opacityTo: 0.05 } },
                         dataLabels: { enabled: false },
                         legend: { position: 'top' },
