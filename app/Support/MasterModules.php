@@ -2,7 +2,10 @@
 
 namespace App\Support;
 
+use App\Domain\Attendance\AttendanceCalculator;
+use App\Domain\Attendance\ValidateAttendance;
 use App\Enums\ContractType;
+use App\Enums\FamilyRelation;
 use App\Enums\Gender;
 use App\Enums\IdentityType;
 use App\Enums\MaritalStatus;
@@ -10,7 +13,13 @@ use App\Enums\MutationType;
 use App\Enums\ReasonType;
 use App\Enums\RiskRatio;
 use App\Enums\SalaryState;
+use App\Enums\SkillLevel;
 use App\Enums\TaxGroup;
+use App\Models\Attendance\Attendance;
+use App\Models\Attendance\AttendanceSummary;
+use App\Models\Attendance\Leave;
+use App\Models\Attendance\Overtime;
+use App\Models\Attendance\Shiftment;
 use App\Models\Company\Company;
 use App\Models\Company\CompanyAddress;
 use App\Models\Company\CompanyDepartment;
@@ -20,6 +29,9 @@ use App\Models\Company\JobTitle;
 use App\Models\Employee\CareerHistory;
 use App\Models\Employee\Employee;
 use App\Models\Employee\EmployeeAddress;
+use App\Models\Employee\EmployeeEducation;
+use App\Models\Employee\EmployeeFamily;
+use App\Models\Employee\EmployeeSkill;
 use App\Models\Employee\Mutation;
 use App\Models\Employee\Placement;
 use App\Models\Master\City;
@@ -31,22 +43,18 @@ use App\Models\Master\Reason;
 use App\Models\Master\Region;
 use App\Models\Master\Skill;
 use App\Models\Master\SkillGroup;
-use App\Models\Attendance\Attendance;
-use App\Models\Attendance\AttendanceSummary;
-use App\Models\Attendance\Leave;
-use App\Models\Attendance\Overtime;
-use App\Models\Attendance\Shiftment;
 use App\Models\Payroll\CompanyCost;
 use App\Models\Payroll\Payroll;
 use App\Models\Payroll\PayrollDetail;
 use App\Models\Payroll\PayrollPeriod;
 use App\Models\Payroll\SalaryAllowance;
 use App\Models\Payroll\SalaryBenefit;
-use Illuminate\Validation\ValidationException;
 use App\Models\Payroll\SalaryBenefitHistory;
 use App\Models\Payroll\SalaryComponent;
 use App\Models\Tax\Tax;
 use App\Models\Tax\TaxGroupHistory;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 final class MasterModules
 {
@@ -221,7 +229,7 @@ final class MasterModules
 
             'company-addresses' => self::module(
                 title: 'Alamat Perusahaan',
-                menu: 'company',
+                menu: 'address',
                 model: CompanyAddress::class,
                 columns: [
                     ['data' => 'company_name', 'title' => 'Perusahaan'],
@@ -378,7 +386,7 @@ final class MasterModules
 
             'employee-addresses' => self::module(
                 title: 'Alamat Karyawan',
-                menu: 'employee',
+                menu: 'address',
                 model: EmployeeAddress::class,
                 columns: [
                     ['data' => 'employee_name', 'title' => 'Karyawan'],
@@ -503,6 +511,78 @@ final class MasterModules
                 ],
             ),
 
+            'employee-families' => self::module(
+                title: 'Data Keluarga',
+                menu: 'employee',
+                model: EmployeeFamily::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'relation_text', 'title' => 'Hubungan'],
+                    ['data' => 'name', 'title' => 'Nama'],
+                    ['data' => 'gender_text', 'title' => 'JK'],
+                    ['data' => 'date_of_birth', 'title' => 'Tanggal Lahir'],
+                    ['data' => 'job', 'title' => 'Pekerjaan'],
+                ],
+                searchable: ['name', 'identity_number'],
+                order: ['name', 'asc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'relation', 'label' => 'Hubungan', 'type' => 'select', 'required' => true,
+                        'options' => self::enumOptions(FamilyRelation::class)],
+                    self::field('name', 'Nama', 'text', required: true, upcase: true),
+                    ['name' => 'gender', 'label' => 'Jenis Kelamin', 'type' => 'select',
+                        'options' => self::enumOptions(Gender::class)],
+                    self::field('date_of_birth', 'Tanggal Lahir', 'date'),
+                    self::field('identity_number', 'Nomor Identitas', 'text', max: 27),
+                    self::field('job', 'Pekerjaan', 'text'),
+                ],
+            ),
+
+            'employee-educations' => self::module(
+                title: 'Pendidikan',
+                menu: 'employee',
+                model: EmployeeEducation::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'education_title_name', 'title' => 'Jenjang'],
+                    ['data' => 'education_institute_name', 'title' => 'Institusi'],
+                    ['data' => 'year', 'title' => 'Tahun'],
+                ],
+                searchable: ['year'],
+                order: ['year', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'education_title_id', 'label' => 'Jenjang', 'type' => 'select',
+                        'model' => EducationTitle::class, 'text' => 'name', 'nullable' => true],
+                    ['name' => 'education_institute_id', 'label' => 'Institusi', 'type' => 'select',
+                        'model' => EducationalInstitute::class, 'text' => 'name', 'nullable' => true],
+                    self::field('year', 'Tahun', 'text', max: 4),
+                ],
+            ),
+
+            'employee-skills' => self::module(
+                title: 'Keahlian',
+                menu: 'employee',
+                model: EmployeeSkill::class,
+                columns: [
+                    ['data' => 'employee_name', 'title' => 'Karyawan'],
+                    ['data' => 'skill_name', 'title' => 'Keahlian'],
+                    ['data' => 'level_text', 'title' => 'Level'],
+                ],
+                searchable: [],
+                order: ['updated_at', 'desc'],
+                fields: [
+                    ['name' => 'employee_id', 'label' => 'Karyawan', 'type' => 'select',
+                        'model' => Employee::class, 'text' => 'display', 'required' => true],
+                    ['name' => 'skill_id', 'label' => 'Keahlian', 'type' => 'select',
+                        'model' => Skill::class, 'text' => 'name', 'required' => true],
+                    ['name' => 'level', 'label' => 'Level', 'type' => 'select',
+                        'options' => self::enumOptions(SkillLevel::class)],
+                ],
+            ),
+
             'attendances' => self::module(
                 title: 'Absensi',
                 menu: 'attendance',
@@ -531,14 +611,14 @@ final class MasterModules
                         'model' => Reason::class, 'text' => 'name', 'nullable' => true],
                     self::field('description', 'Keterangan', 'textarea'),
                 ],
-            ) + ['validator' => static function (\Illuminate\Http\Request $request, array $data): void {
-                $attendance = new Attendance();
+            ) + ['validator' => static function (Request $request, array $data): void {
+                $attendance = new Attendance;
                 $attendance->fill($data);
                 $attendance->absent = $request->boolean('absent');
 
-                app(\App\Domain\Attendance\AttendanceCalculator::class)->calculate($attendance);
+                app(AttendanceCalculator::class)->calculate($attendance);
 
-                if (! \App\Domain\Attendance\ValidateAttendance::validate($attendance)) {
+                if (! ValidateAttendance::validate($attendance)) {
                     if ($attendance->absent) {
                         throw ValidationException::withMessages([
                             'reason_id' => 'Alasan wajib diisi ketika karyawan tidak masuk (absen).',
@@ -892,6 +972,7 @@ final class MasterModules
             'master' => 'master_menu',
             'company' => 'company_menu',
             'employee' => 'employee_menu',
+            'address' => 'address_menu',
             'attendance' => 'attendance_menu',
             'overtime' => 'overtime_menu',
             'leave' => 'leave_menu',

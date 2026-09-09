@@ -182,6 +182,21 @@ class Employee extends Authenticatable implements HasMedia
         return $this->hasMany(EmployeeAddress::class);
     }
 
+    public function families(): HasMany
+    {
+        return $this->hasMany(EmployeeFamily::class);
+    }
+
+    public function educations(): HasMany
+    {
+        return $this->hasMany(EmployeeEducation::class)->orderBy('year', 'desc');
+    }
+
+    public function skills(): HasMany
+    {
+        return $this->hasMany(EmployeeSkill::class);
+    }
+
     public function careerHistories(): HasMany
     {
         return $this->hasMany(CareerHistory::class)->orderBy('created_at', 'desc');
@@ -277,6 +292,11 @@ class Employee extends Authenticatable implements HasMedia
     public function getNameAttribute(): string
     {
         return $this->full_name ?? (string) $this->code;
+    }
+
+    public function getRolesTextAttribute(): string
+    {
+        return $this->getRoleNames()->implode(', ');
     }
 
     public function getCompanyNameAttribute(): ?string

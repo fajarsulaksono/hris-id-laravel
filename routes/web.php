@@ -1,16 +1,19 @@
 <?php
 
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\ConfigController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\MasterDataController;
 use App\Http\Controllers\Admin\OvertimeController;
 use App\Http\Controllers\Admin\PayrollController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Api\DependencyOptionsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SelfServiceController;
 use App\Support\MasterModules;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +35,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('my')->name('my.')->group(function () {
+        Route::get('profile', [SelfServiceController::class, 'profile'])->name('profile');
+        Route::get('attendance', [SelfServiceController::class, 'attendance'])->name('attendance');
+        Route::get('leaves', [SelfServiceController::class, 'leaves'])->name('leaves');
+        Route::post('leaves', [SelfServiceController::class, 'storeLeave'])->name('leaves.store');
+        Route::get('payrolls', [SelfServiceController::class, 'payrolls'])->name('payrolls');
+        Route::get('payrolls/{payroll}/pdf', [SelfServiceController::class, 'payrollPdf'])->name('payrolls.pdf');
+    });
 
     Route::prefix('admin')->name('admin.')->middleware('employeeContext')->group(function () {
         Route::middleware('checkRole:EMPLOYEE')
@@ -100,5 +112,16 @@ Route::middleware('auth')->group(function () {
                     $d(Route::delete('/{id}/permanent', [MasterDataController::class, 'forceDestroy']))->name('force-destroy');
                 });
         }
+
+        Route::middleware('checkRole:user_menu')->group(function () {
+            Route::get('users', [UserManagementController::class, 'index'])->name('users.index');
+            Route::get('users/data', [UserManagementController::class, 'data'])->name('users.data');
+            Route::get('users/{employee}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+            Route::put('users/{employee}', [UserManagementController::class, 'update'])->name('users.update');
+        });
+
+        Route::middleware('checkRole:config_menu')
+            ->get('config', [ConfigController::class, 'index'])
+            ->name('config.index');
     });
 });

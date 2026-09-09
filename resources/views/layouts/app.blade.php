@@ -217,11 +217,49 @@
                 @endphp
                 <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false" id="navigation">
                     <li class="nav-item">
-                        <a href="{{ route('dashboard') }}" class="nav-link {{ $aEq(null) ? 'active' : '' }}">
+                        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-dashboard"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
+
+                    @can('view_personal')
+                    <li class="nav-item {{ request()->routeIs('my.*') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ request()->routeIs('my.*') ? 'active' : '' }}">
+                            <i class="nav-icon ti ti-user"></i>
+                            <p>
+                                Data Saya
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('my.profile') }}" class="nav-link {{ request()->routeIs('my.profile') ? 'active' : '' }}">
+                                    <i class="ti ti-id-badge-2 nav-icon"></i>
+                                    <p>Profil Saya</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('my.attendance') }}" class="nav-link {{ request()->routeIs('my.attendance') ? 'active' : '' }}">
+                                    <i class="ti ti-clock-hour-4 nav-icon"></i>
+                                    <p>Absensi Saya</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('my.leaves') }}" class="nav-link {{ request()->routeIs('my.leaves*') ? 'active' : '' }}">
+                                    <i class="ti ti-plane nav-icon"></i>
+                                    <p>Cuti & Izin</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('my.payrolls') }}" class="nav-link {{ request()->routeIs('my.payrolls') ? 'active' : '' }}">
+                                    <i class="ti ti-wallet nav-icon"></i>
+                                    <p>Slip Gaji Saya</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endcan
 
                     @can('view_master')
                     <li class="nav-item {{ $aEq('master') ? 'menu-open' : '' }}">
@@ -293,8 +331,21 @@
                     <li class="nav-item {{ $aEq('address') ? 'menu-open' : '' }}">
                         <a href="#" class="nav-link {{ $aEq('address') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-map-pin"></i>
-                            <p>Alamat</p>
+                            <p>
+                                Alamat
+                                <i class="nav-arrow ti ti-chevron-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            @foreach (\App\Support\MasterModules::byMenu('address') as $module)
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.'.$module['menu'].'.'.$module['key'].'.index') }}" class="nav-link {{ request()->routeIs('admin.'.$module['menu'].'.'.$module['key'].'.*') ? 'active' : '' }}">
+                                        <i class="ti ti-map-pin nav-icon"></i>
+                                        <p>{{ $module['title'] }}</p>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
                     </li>
                     @endcan
 
@@ -435,8 +486,8 @@
                     @endcan
 
                     @can('view_user')
-                    <li class="nav-item {{ $aEq('user') ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link {{ $aEq('user') ? 'active' : '' }}">
+                    <li class="nav-item {{ request()->routeIs('admin.users*') ? 'menu-open' : '' }}">
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-user-shield"></i>
                             <p>Manajemen User</p>
                         </a>
@@ -444,8 +495,8 @@
                     @endcan
 
                     @can('view_config')
-                    <li class="nav-item {{ $aEq('config') ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link {{ $aEq('config') ? 'active' : '' }}">
+                    <li class="nav-item {{ request()->routeIs('admin.config.index') ? 'menu-open' : '' }}">
+                        <a href="{{ route('admin.config.index') }}" class="nav-link {{ request()->routeIs('admin.config.index') ? 'active' : '' }}">
                             <i class="nav-icon ti ti-settings"></i>
                             <p>Konfigurasi</p>
                         </a>
