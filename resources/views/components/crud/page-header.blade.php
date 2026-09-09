@@ -5,9 +5,15 @@
         array_unshift($crumbs, ['label' => 'Home', 'url' => route('dashboard')]);
     }
 @endphp
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-        <nav class="mb-1 small" aria-label="breadcrumb">
+<div class="row align-items-center mb-3">
+    <div class="col-sm-6">
+        <h3 class="mb-0">{{ $title }}</h3>
+        @if (isset($subtitle))
+            <div class="text-muted small mt-1">{{ $subtitle }}</div>
+        @endif
+    </div>
+    <div class="col-sm-6">
+        <div class="d-flex flex-wrap align-items-center justify-content-sm-end">
             <ol class="breadcrumb mb-0">
                 @foreach ($crumbs as $crumb)
                     @if (is_string($crumb))
@@ -21,13 +27,14 @@
                     @endif
                 @endforeach
             </ol>
-        </nav>
-        <h4 class="fw-bold mb-0">{{ $title }}</h4>
-        @if (isset($subtitle))
-            <div class="text-muted small">{{ $subtitle }}</div>
-        @endif
+        </div>
     </div>
-    @if (isset($actions))
-        <div class="d-flex align-items-center gap-2">{{ $actions }}</div>
-    @endif
 </div>
+
+@if (isset($actions))
+    <div class="row mb-3">
+        <div class="col-12 d-flex flex-wrap align-items-center justify-content-sm-end gap-2">
+            {{ $actions }}
+        </div>
+    </div>
+@endif

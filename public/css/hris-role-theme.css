@@ -1,0 +1,41 @@
+/*
+ * HRIS Role Theme – aksen navbar & brand sidebar per role teratas user.
+ * Diterapkan lewat atribut data-role-theme pada <body> (lihat ViewServiceProvider).
+ * Variabel --hris-role dipakai navbar (.app-header) & bar brand sidebar.
+ */
+
+body[data-role-theme="employee"] {
+  --hris-role: #475569;
+}
+
+body[data-role-theme="hrstaff"] {
+  --hris-role: #15803d;
+}
+
+body[data-role-theme="hrsupervisor"] {
+  --hris-role: #0f766e;
+}
+
+body[data-role-theme="hrmanager"] {
+  --hris-role: #0369a1;
+}
+
+body[data-role-theme="hrgeneral-manager"] {
+  --hris-role: #1d4ed8;
+}
+
+body[data-role-theme="hrdirector"] {
+  --hris-role: #7c3aed;
+}
+
+body[data-role-theme="top-level-management"] {
+  --hris-role: #be185d;
+}
+
+body[data-role-theme="super-admin"] {
+  --hris-role: #b91c1c;
+}
+
+[data-role-theme] .app-header {
+  background-color: var(--hris-role, var(--bs-midnight)) !important;
+}

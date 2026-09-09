@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/css/dataTables.bootstrap5.min.css">
     <!-- HRIS Sidebar -->
     <link rel="stylesheet" href="{{ asset('css/hris-sidebar.css') }}">
+    <!-- HRIS Role Theme -->
+    <link rel="stylesheet" href="{{ asset('css/hris-role-theme.css') }}">
     <!-- HRIS Breadcrumb -->
     <link rel="stylesheet" href="{{ asset('css/hris-breadcrumb.css') }}">
     <style>
@@ -137,7 +139,7 @@
     </style>
     @stack('styles')
 </head>
-<body class="layout-fixed sidebar-expand-lg sidebar-mini bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg sidebar-mini bg-body-tertiary" data-role-theme="{{ $roleTheme ?? 'default' }}">
 <div class="app-wrapper">
 
     <!-- Navbar -->
@@ -145,8 +147,9 @@
         <div class="container-fluid">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
-                        <i class="ti ti-menu-2"></i>
+                    <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button" aria-label="Toggle sidebar">
+                        <i class="ti ti-layout-sidebar-left-collapse" aria-hidden="true"></i>
+                        <i class="ti ti-layout-sidebar-left-expand d-none" aria-hidden="true"></i>
                     </a>
                 </li>
             </ul>
@@ -539,6 +542,7 @@
 <script src="https://cdn.jsdelivr.net/npm/datatables.net@2.3.8/js/dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@2.3.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="{{ asset('js/hris-master.js') }}"></script>
+<script src="{{ asset('js/sidebar-toggle.js') }}"></script>
 <script>
     (function () {
         const root = document.documentElement;

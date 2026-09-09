@@ -24,6 +24,28 @@ class Security
     }
 
     /**
+     * Role dengan ranking tertinggi yang dimiliki seorang user.
+     */
+    public function userRole(Authenticatable $user): ?string
+    {
+        if (! $user instanceof Employee) {
+            return null;
+        }
+
+        $role = null;
+        $rank = -1;
+
+        foreach ($this->ranks() as $candidate => $value) {
+            if ($user->hasRole($candidate) && $value > $rank) {
+                $role = $candidate;
+                $rank = $value;
+            }
+        }
+
+        return $role;
+    }
+
+    /**
      * Ranking tertinggi yang dimiliki seorang user.
      */
     public function userRank(Authenticatable $user): ?int
