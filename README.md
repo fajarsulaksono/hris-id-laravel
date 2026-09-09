@@ -23,11 +23,25 @@ A Laravel 12 port of the [SemartHris](https://github.com/SemartHris) (Symfony 6.
 
 Screenshots below were captured against a freshly seeded demo database (`php artisan migrate --seed` + `DummyDataSeeder`). Each role logs in with its own demo account, so the sidebar and pages reflect exactly what that role can open.
 
+### Authentication
+
+![Masuk — Layar Besar (3/4 + 1/4)](docs/screenshots/authentication/login.png)
+
+![Masuk — Layar Sedang (2/3 + 1/3)](docs/screenshots/authentication/login-md.png)
+
 ### EMPLOYEE — Budi Santoso (`budi.santoso`)
 
-> Regular employee: only the **Dashboard** is available. No master/payroll menus are shown.
+> Regular employee: **Dashboard** plus **Data Saya** (self-service) — own profile, own attendance, leave request/history, and payslip download.
 
 ![EMPLOYEE — Dashboard (self-service only)](docs/screenshots/employee/dashboard.png)
+
+![EMPLOYEE — Profil Saya](docs/screenshots/employee/data-saya-profil.png)
+
+![EMPLOYEE — Absensi Saya](docs/screenshots/employee/data-saya-absensi.png)
+
+![EMPLOYEE — Cuti & Izin Saya](docs/screenshots/employee/data-saya-cuti.png)
+
+![EMPLOYEE — Slip Gaji Saya](docs/screenshots/employee/data-saya-slip-gaji.png)
 
 ### HRSTAFF — Sari Wulandari (`sari.wulandari`)
 
@@ -38,6 +52,12 @@ Screenshots below were captured against a freshly seeded demo database (`php art
 ![HRSTAFF — Karyawan list](docs/screenshots/hrstaff/karyawan.png)
 
 ![HRSTAFF — Absensi list](docs/screenshots/hrstaff/absensi.png)
+
+![HRSTAFF — Data Keluarga](docs/screenshots/hrstaff/data-keluarga.png)
+
+![HRSTAFF — Pendidikan](docs/screenshots/hrstaff/pendidikan.png)
+
+![HRSTAFF — Keahlian](docs/screenshots/hrstaff/keahlian.png)
 
 ### HRSUPERVISOR — Dewi Lestari (`dewi.lestari`)
 
@@ -93,7 +113,8 @@ Screenshots below were captured against a freshly seeded demo database (`php art
 
 ## Features
 
-- **Employee Management** — master data, contracts, mutation, family, education, and skill records
+- **Employee Management** — master data, contracts, mutation, family, education, and skill records (per employee), profile & promotion
+- **Self-service (`Data Saya`)** — every employee views their own profile, attendance, leave request/history, and downloads their own payslip PDF
 - **Attendance** – clock in/out, leave (`Cuti`), `Surat Izin`, `Surat Keterangan`, and overtime (`Lembur`)
 - **Payroll** – salary components, BPJS contributions, PPH21 tax calculation, and payslip (HTML + PDF via `barryvdh/laravel-dompdf`)
 - **Company Structure** – regions, cities, company, department, job level, and job title
@@ -108,7 +129,7 @@ Access control is **rank-based** (see `config/hris.php` → `security` & `role_r
 
 | Rank | Role                 | Sidebar groups available                                                          |
 |------|----------------------|-----------------------------------------------------------------------------------|
-| 0    | `EMPLOYEE`           | Dashboard only                                                                    |
+| 0    | `EMPLOYEE`           | Dashboard + Data Saya (self-service)                                                |
 | 1    | `HRSTAFF`            | + Master, Perusahaan, Karyawan, Alamat, Absensi, Lembur, Cuti, Manajemen User      |
 | 2    | `HRSUPERVISOR`       | + Penggajian (payroll)                                                            |
 | 3    | `HRMANAGER`          | same as HRSUPERVISOR (higher approval/scope rights via policies)                  |
@@ -137,7 +158,7 @@ All module registries live in `app/Support/MasterModules.php` (title, columns, s
 
 ## Modules & Menus
 
-Module list is driven from `MasterModules` and grouped by sidebar menu.
+Module list is driven from `MasterModules` and grouped by sidebar menu. Two additional admin areas sit outside the registry: **Manajemen User** (`/admin/users`) and **Konfigurasi** (`/admin/config`, read-only settings overview).
 
 ### Master (`/admin/master/…`)
 
@@ -158,18 +179,26 @@ Module list is driven from `MasterModules` and grouped by sidebar menu.
 | Module | Route key | Description |
 |---|---|---|
 | Perusahaan | `companies` | Company master data |
-| Alamat Perusahaan | `company-addresses` | Company addresses (default flag) |
 | Departemen | `departments` | Departments (hierarchical) |
 | Departemen Perusahaan | `company-departments` | Company ↔ department relation |
 | Level Jabatan | `job-levels` | Job level hierarchy |
 | Jabatan | `job-titles` | Job titles bound to a level |
+
+### Alamat (`/admin/address/…`)
+
+| Module | Route key | Description |
+|---|---|---|
+| Alamat Karyawan | `employee-addresses` | Employee addresses (default flag) |
+| Alamat Perusahaan | `company-addresses` | Company addresses (default flag) |
 
 ### Karyawan (`/admin/employee/…`)
 
 | Module | Route key | Description |
 |---|---|---|
 | Karyawan | `employees` | Employee master data + **profile page** (`/profile`) & **promotion** (`/promotion`) |
-| Alamat Karyawan | `employee-addresses` | Employee addresses |
+| Data Keluarga | `employee-families` | Family members (parent / spouse / children) |
+| Pendidikan | `employee-educations` | Education history per employee (institute & title) |
+| Keahlian | `employee-skills` | Skills per employee with proficiency level |
 | Penempatan | `placements` | Placement / assignment per company–dept–job title |
 | Mutasi | `mutations` | Job mutation records |
 | Riwayat Karir | `career-histories` | Career history timeline |
@@ -197,6 +226,17 @@ Module list is driven from `MasterModules` and grouped by sidebar menu.
 | Module | Route key | Description |
 |---|---|---|
 | Cuti | `leaves` | Leave records (reason, amount, description) |
+
+### Data Saya (self-service, `/my/…`)
+
+Available to every logged-in employee (own data only):
+
+| Page | Route | Description |
+|---|---|---|
+| Profil Saya | `my.profile` | Own identity & organisation data |
+| Absensi Saya | `my.attendance` | Own attendance history |
+| Cuti & Izin | `my.leaves` | Submit & list own leave requests |
+| Slip Gaji Saya | `my.payrolls` | Own payroll history + payslip PDF |
 
 ### Penggajian (`/admin/payroll/…`)
 
