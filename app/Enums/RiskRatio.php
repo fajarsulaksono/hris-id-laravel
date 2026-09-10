@@ -2,6 +2,13 @@
 
 namespace App\Enums;
 
+/**
+ * JKK (Jaminan Kecelakaan Kerja) risk ratio sesuai PP 44/2021.
+ *
+ * Perbaikan disengaja: Symfony asli (RiskRatioConverter) selalu
+ * menghasilkan 0.24% karena bug `in_array($code, $map)` pada key
+ * float. Port ini menggunakan nilai nyata per-level.
+ */
 enum RiskRatio: string
 {
     case RISK_VERY_HIGH = 'vhr';

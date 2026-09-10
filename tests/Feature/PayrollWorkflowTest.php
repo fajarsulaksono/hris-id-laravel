@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Domain\Salary\Processor\SalaryProcessor;
-use App\Domain\Salary\Service\PayrollProcessor;
 use App\Domain\Tax\Service\TaxProcessor as TaxProcessorService;
 use App\Enums\RiskRatio;
 use App\Enums\TaxGroup;
@@ -195,6 +194,76 @@ class PayrollWorkflowTest extends TestCase
         $this->assertSame(100_116, (int) $minus->benefit_value);
     }
 
+    public function test_progressive_tax_spans_multiple_brackets(): void
+    {
+        $highSalaryEmployee = Employee::create([
+            'company_id' => $this->company->getKey(),
+            'code' => 'EMP901',
+            'full_name' => 'Uji Pajak Progresif',
+            'username' => 'uji.pajak.progresif',
+            'email' => 'uji.pajak.progresif@example.test',
+            'password' => Hash::make('password123'),
+            'join_date' => '2020-02-02',
+            'date_of_birth' => '1985-01-01',
+            'identity_number' => '3174010101850001',
+            'tax_group' => TaxGroup::TK0,
+            'risk_ratio' => RiskRatio::RISK_VERY_LOW,
+            'have_overtime_benefit' => false,
+        ]);
+
+        $component = SalaryComponent::where('code', 'GP')->first();
+        SalaryBenefit::create([
+            'employee_id' => $highSalaryEmployee->getKey(),
+            'component_id' => $component->getKey(),
+            'benefit_value' => 30_000_000,
+        ]);
+
+        AttendanceSummary::create([
+            'employee_id' => $highSalaryEmployee->getKey(),
+            'year' => (int) now()->format('Y'),
+            'month' => (int) now()->format('n'),
+            'total_workday' => 22,
+            'total_in' => 22,
+            'total_loyality' => 0,
+            'total_absent' => 0,
+            'total_overtime' => 0,
+        ]);
+
+        PayrollPeriod::create([
+            'company_id' => $this->company->getKey(),
+            'year' => (int) now()->format('Y'),
+            'month' => (int) now()->format('n'),
+            'closed' => false,
+        ]);
+
+        $this->salaryProcessor()->process($highSalaryEmployee, now());
+
+        $period = PayrollPeriod::where('company_id', $this->company->getKey())
+            ->where('year', (int) now()->format('Y'))
+            ->where('month', (int) now()->format('n'))
+            ->first();
+
+        $payroll = Payroll::where('employee_id', $highSalaryEmployee->getKey())
+            ->where('period_id', $period->getKey())
+            ->first();
+
+        // GP 30M — BPJS pegawai tidak mengurangi take_home_pay
+        $this->assertSame(30_000_000, (int) $payroll->take_home_pay);
+
+        app(TaxProcessorService::class)->process($highSalaryEmployee, $period);
+
+        $tax = Tax::where('employee_id', $highSalaryEmployee->getKey())
+            ->where('period_id', $period->getKey())
+            ->first();
+
+        // TK0 PTKP 54M
+        // PKP = (12 * 30.000.000) - 54.000.000 = 306.000.000
+        // Progresif: 5% * 50M = 2.500.000 + 15% * 200M = 30.000.000 + 25% * 56M = 14.000.000
+        // Total tahunan = 46.500.000, bulanan = 3.875.000
+        $this->assertSame(306_000_000, (int) $tax->taxable);
+        $this->assertSame(3_875_000, (int) $tax->tax_value);
+    }
+
     public function test_bpjs_company_costs_are_recorded(): void
     {
         $this->createPeriod();
@@ -224,7 +293,7 @@ class PayrollWorkflowTest extends TestCase
         ]);
     }
 
-    private function salaryProcessor(): \App\Domain\Salary\Processor\SalaryProcessor
+    private function salaryProcessor(): SalaryProcessor
     {
         return app(SalaryProcessor::class);
     }

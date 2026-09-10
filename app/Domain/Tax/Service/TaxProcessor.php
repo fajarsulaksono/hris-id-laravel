@@ -22,8 +22,7 @@ class TaxProcessor
         private StoreAsCompanyCost $storeAsCompanyCost,
         private string $taxPlusCode,
         private string $taxMinusCode,
-    ) {
-    }
+    ) {}
 
     public function process(Employee $employee, PayrollPeriod $period): void
     {
@@ -36,12 +35,15 @@ class TaxProcessor
             throw new \InvalidArgumentException('Payroll not exist.');
         }
 
-        $tax = Tax::firstOrNew([
+        $existingTax = Tax::where('period_id', $period->getKey())
+            ->where('employee_id', $employee->getKey())
+            ->first();
+
+        $tax = $existingTax ?? new Tax([
             'period_id' => $period->getKey(),
             'employee_id' => $employee->getKey(),
+            'tax_group' => $employee->tax_group,
         ]);
-
-        $tax->tax_group = $employee->tax_group;
         $tax->tax_value = (string) $this->taxProcessor->process($payroll);
         $tax->taxable = (string) $this->taxProcessor->getTaxableValue();
         $tax->untaxable = (string) $this->taxProcessor->getUntaxableValue();

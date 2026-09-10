@@ -25,4 +25,13 @@ class TaxGroupHistoryObserver
     {
         SetNewTaxDataHistory::setNewTaxData($history);
     }
+
+    /**
+     * Port SetOldTaxDataHistorySubscriber (preUpdate): saat riwayat pajak
+     * diedit, terapkan ulang nilai baru ke karyawan.
+     */
+    public function updated(TaxGroupHistory $history): void
+    {
+        SetNewTaxDataHistory::setNewTaxData($history);
+    }
 }

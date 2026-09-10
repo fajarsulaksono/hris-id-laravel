@@ -12,6 +12,7 @@ use App\Domain\Attendance\WorkdayCalculator;
 use App\Domain\Attendance\WorkshiftFinder;
 use App\Domain\Encryptor\Encryptor;
 use App\Domain\Encryptor\KeyLoader;
+use App\Domain\Overtime\HolidayCalculator;
 use App\Domain\Overtime\OvertimeCalculator;
 use App\Domain\Overtime\OvertimeCalculatorInterface;
 use App\Domain\Overtime\OvertimeCalculatorService;
@@ -103,8 +104,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(OvertimeChecker::class);
 
         $this->app->singleton(OvertimeCalculator::class, fn () => new OvertimeCalculator([
-            new \App\Domain\Overtime\WorkdayCalculator(),
-            new \App\Domain\Overtime\HolidayCalculator(),
+            new \App\Domain\Overtime\WorkdayCalculator,
+            new HolidayCalculator,
         ]));
 
         $this->app->bind(OvertimeCalculatorInterface::class, OvertimeCalculator::class);
@@ -164,11 +165,17 @@ class AppServiceProvider extends ServiceProvider
             app(PayrollProcessorInterface::class),
         ));
 
+        $fourth = new FourthRateTaxCalculator;
+        $third = new ThirdRateTaxCalculator;
+        $second = new SecondRateTaxCalculator;
+        $first = new FirstRateTaxCalculator;
+
+        $fourth->setPrevious($third);
+        $third->setPrevious($second);
+        $second->setPrevious($first);
+
         $this->app->singleton(SalaryTaxProcessor::class, fn () => new SalaryTaxProcessor([
-            new FirstRateTaxCalculator(),
-            new SecondRateTaxCalculator(),
-            new ThirdRateTaxCalculator(),
-            new FourthRateTaxCalculator(),
+            $fourth, $third, $second, $first,
         ]));
 
         $this->app->bind(TaxProcessorInterface::class, SalaryTaxProcessor::class);

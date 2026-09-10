@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Domain\Salary\Processor\InvalidPayrollPeriodException;
 use App\Domain\Salary\Service\PayrollProcessor;
 use App\Domain\Tax\Service\TaxProcessor as TaxProcessorService;
+use App\Enums\SalaryState;
+use App\Exports\PayrollRecapExport;
 use App\Http\Controllers\BaseController;
 use App\Models\Company\Company;
 use App\Models\Employee\Employee;
@@ -13,14 +15,14 @@ use App\Models\Payroll\Payroll;
 use App\Models\Payroll\PayrollDetail;
 use App\Models\Payroll\PayrollPeriod;
 use App\Models\Tax\Tax;
+use App\Notifications\PayrollProcessedNotification;
 use App\Support\MasterModules;
+use Barryvdh\DomPDF\Facade\Pdf as PdfFacade;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf as PdfFacade;
-use App\Exports\PayrollRecapExport;
 
 class PayrollController extends BaseController
 {
@@ -73,6 +75,18 @@ class PayrollController extends BaseController
         } catch (InvalidPayrollPeriodException $exception) {
             return redirect()->route('admin.payroll.payrolls.process')
                 ->withErrors(['period' => $exception->getMessage()]);
+        }
+
+        $processed = Payroll::query()
+            ->whereHas('period', fn ($query) => $query
+                ->where('year', $year)
+                ->where('month', $month))
+            ->whereIn('employee_id', $employees->pluck('id'))
+            ->with('employee', 'period')
+            ->get();
+
+        foreach ($processed as $payroll) {
+            $payroll->employee?->notify(new PayrollProcessedNotification($payroll));
         }
 
         return redirect()->route('admin.payroll.payrolls.process')
@@ -302,7 +316,7 @@ class PayrollController extends BaseController
     {
         $payroll = Payroll::with(['employee', 'period.company', 'details.component'])->findOrFail($id);
 
-        $details = $payroll->details->sortBy(fn (PayrollDetail $detail) => $detail->component?->state === \App\Enums\SalaryState::PLUS ? 0 : 1);
+        $details = $payroll->details->sortBy(fn (PayrollDetail $detail) => $detail->component?->state === SalaryState::PLUS ? 0 : 1);
 
         $costs = CompanyCost::query()
             ->where('payroll_id', $payroll->getKey())

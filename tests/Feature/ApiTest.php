@@ -1,0 +1,243 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Company\Company;
+use App\Models\Company\JobLevel;
+use App\Models\Company\JobTitle;
+use App\Models\Employee\Employee;
+use App\Models\Master\Holiday;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class ApiTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private int $sequence = 0;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(RoleSeeder::class);
+    }
+
+    public function test_login_returns_token_and_user(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+
+        $this->postJson('/api/v1/auth/login', [
+            'username' => 'budi.santoso',
+            'password' => 'password123',
+        ])
+            ->assertOk()
+            ->assertJsonStructure(['token', 'user' => ['id', 'full_name', 'username', 'roles']]);
+    }
+
+    public function test_login_rejects_bad_credentials(): void
+    {
+        $this->employee('budi.santoso', 'EMPLOYEE');
+
+        $this->postJson('/api/v1/auth/login', [
+            'username' => 'budi.santoso',
+            'password' => 'wrong-password',
+        ])->assertUnprocessable();
+    }
+
+    public function test_me_returns_authenticated_employee(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.username', 'budi.santoso');
+    }
+
+    public function test_logout_revokes_current_token(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/auth/logout')
+            ->assertOk();
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_unauthenticated_api_request_returns_json_401(): void
+    {
+        $this->getJson('/api/v1/employees')
+            ->assertUnauthorized()
+            ->assertJson(['message' => 'Unauthenticated.']);
+    }
+
+    public function test_employee_role_cannot_read_payroll(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/payroll-periods')
+            ->assertForbidden()
+            ->assertJson(['message' => 'Forbidden.']);
+    }
+
+    public function test_hr_supervisor_can_read_payroll_periods(): void
+    {
+        $supervisor = $this->employee('dewi.lestari', 'HRSUPERVISOR');
+        $token = $this->tokenFor($supervisor);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/payroll-periods')
+            ->assertOk();
+    }
+
+    public function test_search_filters_employees_by_q(): void
+    {
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $token = $this->tokenFor($staff);
+        $this->employee('budi.santoso', 'EMPLOYEE');
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/employees?q=budi')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.full_name', 'Budi Santoso');
+    }
+
+    public function test_pagination_respects_ep(): void
+    {
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $token = $this->tokenFor($staff);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->employee('karyawan.'.$i, 'EMPLOYEE');
+        }
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/employees?ep=2')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 2)
+            ->assertJsonPath('meta.total', 6);
+    }
+
+    public function test_non_super_admin_only_sees_own_company_employees(): void
+    {
+        $companyA = Company::create(['code' => 'PT-A', 'name' => 'PT A', 'birth_day' => '1990-01-01', 'email' => 'a@test.id', 'tax_number' => '00.000.000.0-000.000']);
+        $companyB = Company::create(['code' => 'PT-B', 'name' => 'PT B', 'birth_day' => '1991-01-01', 'email' => 'b@test.id', 'tax_number' => '00.000.000.0-000.000']);
+
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $staff->update(['company_id' => $companyA->getKey()]);
+        $this->employee('milik.b', 'EMPLOYEE')->update(['company_id' => $companyB->getKey()]);
+
+        $token = $this->tokenFor($staff->fresh());
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/employees')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.full_name', 'Sari Wulandari');
+    }
+
+    public function test_super_admin_sees_all_company_employees(): void
+    {
+        $companyA = Company::create(['code' => 'PT-A', 'name' => 'PT A', 'birth_day' => '1990-01-01', 'email' => 'a@test.id', 'tax_number' => '00.000.000.0-000.000']);
+        $companyB = Company::create(['code' => 'PT-B', 'name' => 'PT B', 'birth_day' => '1991-01-01', 'email' => 'b@test.id', 'tax_number' => '00.000.000.0-000.000']);
+
+        $admin = $this->employee('agus.setiawan', 'SUPER_ADMIN');
+        $this->employee('milik.a', 'EMPLOYEE')->update(['company_id' => $companyA->getKey()]);
+        $this->employee('milik.b', 'EMPLOYEE')->update(['company_id' => $companyB->getKey()]);
+
+        $token = $this->tokenFor($admin);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/employees')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 3);
+    }
+
+    public function test_hr_staff_can_create_and_delete_holiday(): void
+    {
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $token = $this->tokenFor($staff);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/holidays', [
+                'holiday_date' => '2026-12-25',
+                'name' => 'Natal',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'Natal');
+
+        $holiday = Holiday::firstOrFail();
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->deleteJson("/api/v1/holidays/{$holiday->getKey()}")
+            ->assertOk();
+
+        $this->assertSoftDeleted('holidays', ['id' => $holiday->getKey()]);
+    }
+
+    public function test_read_only_module_rejects_store(): void
+    {
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $token = $this->tokenFor($staff);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/departments', ['code' => 'IT', 'name' => 'IT'])
+            ->assertForbidden();
+    }
+
+    public function test_hr_staff_can_update_job_title(): void
+    {
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $level = JobLevel::create(['code' => 'MGR', 'name' => 'Manager']);
+        $title = JobTitle::create([
+            'code' => 'MGR',
+            'name' => 'Manager',
+            'job_level_id' => $level->getKey(),
+        ]);
+        $token = $this->tokenFor($staff);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->putJson("/api/v1/job-titles/{$title->getKey()}", [
+                'code' => 'MGR',
+                'name' => 'Senior Manager',
+                'job_level_id' => $level->getKey(),
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.name', 'SENIOR MANAGER');
+    }
+
+    private function employee(string $username, string $role): Employee
+    {
+        $sequence = ++$this->sequence;
+
+        $employee = Employee::create([
+            'code' => Str::upper(str_pad((string) $sequence, 3, '0', STR_PAD_LEFT)),
+            'full_name' => Str::title(str_replace('.', ' ', $username)),
+            'username' => $username,
+            'email' => $username.'@example.test',
+            'password' => Hash::make('password123'),
+            'join_date' => '2020-01-01',
+            'date_of_birth' => '1990-09-25',
+            'identity_number' => '31740125099000'.str_pad((string) $sequence, 2, '0', STR_PAD_LEFT),
+        ]);
+
+        $employee->assignRole($role);
+
+        return $employee;
+    }
+
+    private function tokenFor(Employee $employee): string
+    {
+        return $employee->createToken('test')->plainTextToken;
+    }
+}

@@ -14,6 +14,10 @@ class ChangeBenefit
 {
     public function apply(SalaryBenefitHistory $benefitHistory): void
     {
+        if (is_null($benefitHistory->new_benefit_value) || $benefitHistory->new_benefit_value === '') {
+            return;
+        }
+
         $oldBenefit = SalaryBenefit::query()
             ->where('employee_id', $benefitHistory->employee_id)
             ->where('component_id', $benefitHistory->component_id)

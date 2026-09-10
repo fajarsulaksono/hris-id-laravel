@@ -1,8 +1,17 @@
 <?php
 
+use App\Http\Middleware\CheckApiRole;
+use App\Http\Middleware\CheckRoleRank;
+use App\Http\Middleware\SetCompanyContext;
+use App\Http\Middleware\SetEmployeeContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,14 +22,20 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
-            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
-            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-            'checkRole' => \App\Http\Middleware\CheckRoleRank::class,
-            'companyContext' => \App\Http\Middleware\SetCompanyContext::class,
-            'employeeContext' => \App\Http\Middleware\SetEmployeeContext::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'checkRole' => CheckRoleRank::class,
+            'companyContext' => SetCompanyContext::class,
+            'employeeContext' => SetEmployeeContext::class,
+            'apiRole' => CheckApiRole::class,
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Ensure API routes always return JSON errors.
+        $exceptions->shouldRenderJsonWhen(function ($request, $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
     })->create();

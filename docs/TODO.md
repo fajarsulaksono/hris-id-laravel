@@ -75,31 +75,32 @@ Simbol: `[x]` selesai, `[ ]` belum, `[-]` sebagian/sebagian besar selesai.
 
 ## Fase 4 — Payroll, BPJS, Pajak (paling kritis)
 
-> **Status per commit `eb635f4`**: inti workflow sudah ter-port & teruji hijau (PayrollWorkflowTest + PayrollUiTest, 93 tes/308 asersi). Temuan review di bawah menandai gap yang masih perlu dibereskan.
+> **Status**: inti workflow ter-port & teruji hijau (PayrollWorkflowTest + PayrollUiTest + PayrollValidationTest, 127 tes/456 asersi). Seluruh temuan review Fase 4 sudah ditindaklanjuti.
 
 - [x] Model: `SalaryComponent`, `SalaryBenefit`, `SalaryBenefitHistory`, `SalaryAllowance`, `PayrollPeriod`, `Payroll`, `PayrollDetail`, `CompanyPayrollCost` (di-port sebagai `CompanyCost`, tabel `company_costs`), `Tax`, `TaxGroupHistory`
-- [x] Port Tax calculator progresif 4 bracket (5/15/25/30%) — app/Domain/Tax (**tapi rantai `setPrevious` belum di-wire**, lihat gap HIGH #1)
+- [x] Port Tax calculator progresif 4 bracket (5/15/25/30%) — app/Domain/Tax + rantai `setPrevious` sudah di-wire
 - [x] Port `Encryptor` RSA + `KeyLoader` — app/Domain/Encryptor
 - [x] Port Salary Processor chain (Attendance → Overtime → Fixed Salary → BPJS → StoreAsCompanyCost; Tax & closing periode terpisah) — topologi sama dengan `services.yaml` asli; `Salary\Service\PayrollProcessor` membuat periode otomatis
 - [x] `SalaryCast` Eloquent custom (enkripsi otomatis read/write) + fix get() (decode base64 → regex `#<40-hex>` key). Catatan: format penyimpanan **`#suffix`** berbeda dari asli (kolom `benefit_key`/`take_home_pay_key`/`tax_key` terpisah) → tidak byte-compatible dengan DB SemartHris lama, tapi konsisten internal
-- [-] Aturan domain benefit/kontrak/history (gap integrasi, lihat #5–#7 di bawah): `ValidateBenefit`, `ChangeBenefit`, `SalaryBenefitHistoryObserver`, `TaxGroupHistoryObserver`, `Rules\SalaryBenefit`, `Rules\ValidTaxHistory` sudah ada tapi **belum di-wire ke CRUD/form**; `TaxGroupHistoryObserver` belum menangani `updating/updated`
+- [x] Aturan domain benefit/kontrak/history sudah di-wire: `ValidateBenefit::employeeHasPayroll` ke modul `salary-benefits`, `ValidateTaxHistory` ke modul `tax-group-histories`, `TaxGroupHistoryObserver` menangani `creating/created/updated`
 - [x] Form tunjangan/potongan, proses payroll per periode & closing, detail gaji, beban gaji perusahaan — via modul CRUD (salary-benefits/allowances/company-costs), halaman Proses Payroll, Proses Pajak (closing), detail slip, rekap
 - [x] Laporan: slip gaji (PDF per karyawan), rekap + export **Excel** (maatwebsite/excel) & **PDF** (barryvdh/laravel-dompdf); riwayat tersedia lewat modul `payrolls`/`taxes`
-- [-] **Uji banding numerik wajib**: `PayrollWorkflowTest` sudah membandingkan take home (7.252.312), PPh21 (100.116), BPJS company cost, idempotensi — **tapi hanya dalam bracket 5% & `RISK_VERY_LOW`** sehingga tidak menangkap gap HIGH #1 dan #2 di bawah; perlu golden dataset multi-bracket/risk
+- [x] **Uji banding numerik multi-bracket**: `PayrollWorkflowTest` mencakup take home, PPh21 single-bracket (PKP 24 jt) + multi-bracket (PKP 306 jt, 3 bracket), BPJS company cost, idempotensi
 
-### Temuan review Fase 4 (perlu ditindaklanjuti)
-- [ ] **HIGH — rantai bracket pajak tidak tersambung**: `AppServiceProvider` (baris 167–172) membuat `First/Second/Third/FourthRateTaxCalculator` tanpa `setPrevious()` (asli `services.yaml:290–309` menyambung Fourth→Third→Second→First). `AbstractTaxCalculator::calculate()` bergantung pada `getPrevious()` → PKP ≥ 50 juta dihitung salah (seluruh PKP dikenai tarif bracket tunggal, bukan progresif). `PayrollWorkflowTest` memakai PKP 24 jt sehingga lolos. **Fix: wire setPrevious + tes PKP 100/300 jt.**
-- [ ] **HIGH/MEDIUM — risk ratio JKK berbeda dari asli**: asli `RiskRatioConverter` selalu menghasilkan 0.24% (bug `in_array($code, $map)` yang kuncinya float) → port memakai nilai nyata 0.0024–0.0174 (`RiskRatio::value()`). Ini "perbaikan" bukan port 1:1 — jika target uji banding = Symfony, hasil JKK untuk risk ≠ sangat-rendah akan berbeda. **Keputusan: samakan dgn asli (0.24%) atau dokumentasikan sebagai perbaikan disengaja.**
-- [ ] **MEDIUM — `TaxGroupHistoryObserver` hanya `creating/created`**: asli `SetOldTaxDataHistorySubscriber` juga jalan di `preUpdate`, jadi meng-edit baris history lama seharusnya menulis ulang `tax_group`/`risk_ratio` karyawan. Port belum punya `updating/updated`.
-- [ ] **MEDIUM — aturan belum di-wire**: benefit hanya valid pada kontrak aktif; perubahan gaji wajib lewat history (`ChangeBenefit`), bukan edit langsung `SalaryBenefit`; `ValidateBenefit::employeeHasPayroll` (blokir edit gaji setelah payroll ada) — `Rules\SalaryBenefit`/`Rules\ValidTaxHistory` tidak direferensikan controller mana pun (baris 6–7 temuan).
-- [ ] **LOW — `ChangeBenefit` saat edit history tanpa `new_benefit_value`**: observer `saving` akan menimpa benefit hidup dengan string kosong; butuh guard (asli dijamin `@Assert\NotBlank`).
-- [ ] **LOW — kelengkapan kecil**: tidak ada `ValidateStateType`/`ValidateTaxGroup` service (digantikan enum + cast — fungsional setara); `Tax\Service\TaxProcessor` menimpa `tax_group` tiap run sedangkan asli hanya saat row baru.
+### Temuan review Fase 4 (semua sudah ditindaklanjuti)
+- [x] **HIGH — rantai bracket pajak tidak tersambung**: `AppServiceProvider` kini wire `Fourth→Third→Second→First` via `setPrevious()`. Tes `test_progressive_tax_spans_multiple_brackets` (PKP 306 jt, 3 bracket) verifikasi.
+- [x] **HIGH/MEDIUM — risk ratio JKK berbeda dari asli**: didokumentasikan sebagai perbaikan disengaja di `RiskRatio` enum (asli punya bug `in_array` pada key float).
+- [x] **MEDIUM — `TaxGroupHistoryObserver` hanya `creating/created`**: `updated()` ditambahkan, mengaplikasikan ulang nilai baru ke karyawan saat history diedit.
+- [x] **MEDIUM — aturan belum di-wire**: `ValidateBenefit::employeeHasPayroll` di-wire ke modul `salary-benefits`, `ValidateTaxHistory` di-wire ke modul `tax-group-histories` via `validator` callback.
+- [x] **LOW — `ChangeBenefit` saat edit history tanpa `new_benefit_value`**: guard `empty()` ditambahkan di `ChangeBenefit::apply()`.
+- [x] **LOW — `TaxProcessor` menimpa `tax_group` tiap run**: sekarang hanya menetapkan `tax_group` saat row baru dibuat (bukan update). `ValidateStateType`/`ValidateTaxGroup` tidak diperlukan (enum + cast fungsional setara).
 
 ## Fase 5 — API & Notifikasi
 
-- [ ] Rute API per domain (Sanctum + `API Resource`), filter partial search (`code/name/fullName/shortName`), pagination (`p`,`ep`,`i`)
-- [ ] Middleware role API & konteks perusahaan/karyawan
-- [ ] (Opsional) Notifikasi email approval
+- [x] Rute API per domain (Sanctum + `API Resource`), filter partial search (`q` atas `code/name/full_name`), pagination (`p`,`ep`) — `ApiModules` registry + `ApiController` generik (28 domain, 86 rute di `routes/api.php`)
+- [x] Middleware role API (`CheckApiRole`, 403 JSON) & konteks perusahaan/karyawan (scope non-SUPER_ADMIN ke perusahaan sendiri)
+- [x] Auth API: `login/logout/me` dengan Sanctum token ber-ability sesuai role; `Employee` memakai `HasApiTokens`
+- [x] Notifikasi email approval: `OvertimeApprovedNotification` (saat auto-approved) & `PayrollProcessedNotification` (setelah proses penggajian)
 
 ## Fase 6 — Pengujian, Hardening & Cutover
 

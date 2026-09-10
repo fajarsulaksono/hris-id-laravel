@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Domain\Attendance\AttendanceCalculator;
 use App\Domain\Attendance\ValidateAttendance;
+use App\Domain\Salary\Service\ValidateBenefit;
+use App\Domain\Tax\Service\ValidateTaxHistory;
 use App\Enums\ContractType;
 use App\Enums\FamilyRelation;
 use App\Enums\Gender;
@@ -53,6 +55,7 @@ use App\Models\Payroll\SalaryBenefitHistory;
 use App\Models\Payroll\SalaryComponent;
 use App\Models\Tax\Tax;
 use App\Models\Tax\TaxGroupHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -759,7 +762,14 @@ final class MasterModules
                         'model' => SalaryComponent::class, 'text' => 'name', 'required' => true],
                     self::field('benefit_value', 'Nilai', 'text', required: true),
                 ],
-            ),
+            ) + ['validator' => static function (Request $request, array $data, ?Model $model): void {
+                $employee = Employee::find($data['employee_id'] ?? $request->input('employee_id'));
+                if ($employee && app(ValidateBenefit::class)->employeeHasPayroll($employee)) {
+                    throw ValidationException::withMessages([
+                        'employee_id' => 'Karyawan sudah diproses payroll, tunjangan tidak dapat ditambahkan/diubah.',
+                    ]);
+                }
+            }],
 
             'salary-allowances' => self::module(
                 title: 'Tunjangan & Potongan',
@@ -942,7 +952,31 @@ final class MasterModules
                     ['name' => 'new_risk_ratio', 'label' => 'Rasio Risiko Baru', 'type' => 'select',
                         'options' => self::enumOptions(RiskRatio::class)],
                 ],
-            ),
+            ) + ['validator' => static function (Request $request, array $data, ?Model $model): void {
+                $employeeId = $data['employee_id'] ?? $request->input('employee_id');
+                $employee = Employee::find($employeeId);
+                if (! $employee) {
+                    return;
+                }
+
+                $history = $model instanceof TaxGroupHistory
+                    ? $model
+                    : new TaxGroupHistory;
+
+                $history->setRawAttributes([
+                    'employee_id' => $employee->getKey(),
+                    'new_tax_group' => $data['new_tax_group'] ?? $request->input('new_tax_group'),
+                    'new_risk_ratio' => $data['new_risk_ratio'] ?? $request->input('new_risk_ratio'),
+                ]);
+
+                $history->setRelation('employee', $employee);
+
+                if (! ValidateTaxHistory::validate($history)) {
+                    throw ValidationException::withMessages([
+                        'new_tax_group' => 'Tidak ada perubahan data pajak yang valid (tax group / risk ratio).',
+                    ]);
+                }
+            }],
         ];
     }
 
