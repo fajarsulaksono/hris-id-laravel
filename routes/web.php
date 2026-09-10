@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApprovalController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\ConfigController;
 use App\Http\Controllers\Admin\EmployeeController;
@@ -123,5 +124,17 @@ Route::middleware('auth')->group(function () {
         Route::middleware('checkRole:config_menu')
             ->get('config', [ConfigController::class, 'index'])
             ->name('config.index');
+
+        Route::middleware('checkRole:HRSTAFF')
+            ->name('approvals.')
+            ->group(function () {
+                Route::get('approvals/leaves', [ApprovalController::class, 'leaves'])->name('leaves');
+                Route::post('approvals/leaves/{leave}/approve', [ApprovalController::class, 'approveLeave'])->name('leaves.approve');
+                Route::post('approvals/leaves/{leave}/reject', [ApprovalController::class, 'rejectLeave'])->name('leaves.reject');
+
+                Route::get('approvals/overtimes', [ApprovalController::class, 'overtimes'])->name('overtimes');
+                Route::post('approvals/overtimes/{overtime}/approve', [ApprovalController::class, 'approveOvertime'])->name('overtimes.approve');
+                Route::post('approvals/overtimes/{overtime}/reject', [ApprovalController::class, 'rejectOvertime'])->name('overtimes.reject');
+            });
     });
 });

@@ -237,7 +237,7 @@ class ApiController extends Controller
      */
     protected function normalizeTimeFields(array $data): array
     {
-        foreach (['check_in', 'check_out'] as $field) {
+        foreach (['check_in', 'check_out', 'start_hour', 'end_hour'] as $field) {
             if (! empty($data[$field])) {
                 $data[$field] = Carbon::parse((string) $data[$field])->format('H:i');
             }
@@ -274,6 +274,7 @@ class ApiController extends Controller
             'department_id',
             'year',
             'month',
+            'type',
         ];
     }
 }

@@ -111,9 +111,10 @@ final class ApiModules
                 title: 'Alasan',
                 model: Reason::class,
                 resource: ReasonResource::class,
-                ability: 'view_master',
+                ability: 'view_reason',
                 searchable: ['code', 'name'],
                 mutable: true,
+                write_ability: 'manage_master',
                 rules: [
                     'type' => ['required', 'string'],
                     'code' => ['required', 'string', 'max:10'],
@@ -299,20 +300,50 @@ final class ApiModules
                 title: 'Lembur',
                 model: Overtime::class,
                 resource: OvertimeResource::class,
-                ability: 'view_overtime',
+                ability: 'view_my_overtime',
                 order: ['overtime_date', 'desc'],
                 with: ['employee', 'shiftment', 'approvedBy'],
                 scope: self::viaEmployeeCompanyScope(),
+                mutable: true,
+                self_service: true,
+                self_unique: 'overtime_date',
+                managed_by: 'view_overtime',
+                rules: [
+                    'overtime_date' => ['required', 'date'],
+                    'start_hour' => ['required'],
+                    'end_hour' => ['required', 'after:start_hour'],
+                ],
+                update_rules: [
+                    'overtime_date' => ['nullable', 'date'],
+                    'start_hour' => ['nullable'],
+                    'end_hour' => ['nullable'],
+                ],
             ),
 
             'leaves' => self::module(
                 title: 'Cuti',
                 model: Leave::class,
                 resource: LeaveResource::class,
-                ability: 'view_leave',
+                ability: 'view_my_leave',
                 order: ['leave_date', 'desc'],
-                with: ['employee', 'reason'],
+                with: ['employee', 'reason', 'approvedBy'],
                 scope: self::viaEmployeeCompanyScope(),
+                mutable: true,
+                self_service: true,
+                self_unique: 'leave_date',
+                managed_by: 'view_leave',
+                rules: [
+                    'leave_date' => ['required', 'date'],
+                    'reason_id' => ['required', 'exists:absent_reasons,id'],
+                    'amount' => ['required', 'integer', 'min:1', 'max:31'],
+                    'description' => ['nullable', 'string', 'max:255'],
+                ],
+                update_rules: [
+                    'leave_date' => ['nullable', 'date'],
+                    'reason_id' => ['nullable', 'exists:absent_reasons,id'],
+                    'amount' => ['nullable', 'integer', 'min:1', 'max:31'],
+                    'description' => ['nullable', 'string', 'max:255'],
+                ],
             ),
 
             // ---- Payroll ----
@@ -454,6 +485,7 @@ final class ApiModules
         bool $self_service = false,
         ?string $self_unique = null,
         ?string $managed_by = null,
+        ?string $write_ability = null,
     ): array {
         return [
             'title' => $title,
@@ -470,6 +502,7 @@ final class ApiModules
             'self_service' => $self_service,
             'self_unique' => $self_unique,
             'managed_by' => $managed_by,
+            'write_ability' => $write_ability,
         ];
     }
 }

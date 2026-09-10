@@ -424,6 +424,12 @@
                                     <p>Proses Bulanan</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.approvals.overtimes') }}" class="nav-link {{ request()->routeIs('admin.approvals.overtimes') ? 'active' : '' }}">
+                                    <i class="ti ti-checklist nav-icon"></i>
+                                    <p>Persetujuan</p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     @endcan
@@ -446,6 +452,12 @@
                                     </a>
                                 </li>
                             @endforeach
+                            <li class="nav-item">
+                                <a href="{{ route('admin.approvals.leaves') }}" class="nav-link {{ request()->routeIs('admin.approvals.leaves') ? 'active' : '' }}">
+                                    <i class="ti ti-checklist nav-icon"></i>
+                                    <p>Persetujuan</p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     @endcan

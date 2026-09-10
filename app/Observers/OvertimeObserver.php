@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Domain\Attendance\HolidayChecker;
 use App\Domain\Overtime\OvertimeCalculatorService;
+use App\Enums\ApprovalStatus;
 use App\Models\Attendance\Overtime;
 use App\Models\Employee\Employee;
 use App\Notifications\OvertimeApprovedNotification;
@@ -41,15 +42,20 @@ class OvertimeObserver
             $overtime->holiday = true;
         }
 
-        if (config('hris.overtime.auto_approved')) {
+        if (config('hris.overtime.auto_approved') && $overtime->status !== ApprovalStatus::REJECTED) {
             $user = auth()->user();
 
             if ($user instanceof Employee) {
                 $overtime->approved_by_id = $user->getKey();
+                $overtime->status = ApprovalStatus::APPROVED;
             }
         }
 
         $this->overtimeCalculatorService->calculate($overtime);
+
+        if ($overtime->approved_by_id === null && $overtime->status === ApprovalStatus::APPROVED) {
+            $overtime->status = ApprovalStatus::PENDING;
+        }
     }
 
     private function notifyApproved(Overtime $overtime): void

@@ -2,12 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ReasonType;
 use App\Models\Attendance\Attendance;
+use App\Models\Attendance\Leave;
+use App\Models\Attendance\Overtime;
 use App\Models\Company\Company;
 use App\Models\Company\JobLevel;
 use App\Models\Company\JobTitle;
 use App\Models\Employee\Employee;
 use App\Models\Master\Holiday;
+use App\Models\Master\Reason;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -341,6 +345,85 @@ class ApiTest extends TestCase
             ->putJson("/api/v1/attendances/{$attendance->getKey()}", ['check_out' => '18:00'])
             ->assertUnprocessable()
             ->assertJson(['message' => 'Check-out sudah dicatat.']);
+    }
+
+    public function test_employee_can_list_leave_reasons(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        Reason::create(['type' => ReasonType::LEAVE, 'code' => 'CTH', 'name' => 'CUTI TAHUNAN']);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/reasons?type='.ReasonType::LEAVE->value)
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_employee_can_submit_own_leave(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $reason = Reason::create(['type' => ReasonType::LEAVE, 'code' => 'CTH', 'name' => 'CUTI TAHUNAN']);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/leaves', [
+                'leave_date' => '2026-09-15',
+                'reason_id' => $reason->getKey(),
+                'amount' => 2,
+                'description' => 'Liburan keluarga',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.employee_id', $employee->getKey());
+    }
+
+    public function test_employee_cannot_list_other_employees_leaves(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $other = $this->employee('sinta.dewi', 'EMPLOYEE');
+        Reason::create(['type' => ReasonType::LEAVE, 'code' => 'CTH', 'name' => 'CUTI TAHUNAN']);
+        Leave::create(['employee_id' => $other->getKey(), 'leave_date' => '2026-09-10', 'reason_id' => Reason::first()->getKey(), 'amount' => 1]);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/leaves')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_employee_can_submit_own_overtime_with_auto_approved_status(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/overtimes', [
+                'overtime_date' => '2026-09-15',
+                'start_hour' => '18:00',
+                'end_hour' => '20:00',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.employee_id', $employee->getKey())
+            ->assertJsonPath('data.start_hour', '18:00');
+    }
+
+    public function test_employee_cannot_create_overtime_without_workshift(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/overtimes', [
+                'overtime_date' => '2026-09-15',
+                'start_hour' => '18:00',
+                'end_hour' => '20:00',
+            ])
+            ->assertCreated();
+
+        $overtime = Overtime::first();
+        $this->assertNotNull($overtime);
+        $this->assertFalse($overtime->holiday);
+        $this->assertSame((int) $overtime->raw_value, 0);
     }
 
     private function employee(string $username, string $role): Employee

@@ -2,6 +2,7 @@
 
 namespace App\Models\Attendance;
 
+use App\Enums\ApprovalStatus;
 use App\Models\Employee\Employee;
 use App\Support\Concerns\Blameable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -11,15 +12,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Overtime extends Model
 {
+    use Blameable;
     use HasUuids;
     use SoftDeletes;
-    use Blameable;
 
     protected $table = 'overtimes';
 
     protected $keyType = 'string';
 
     public $incrementing = false;
+
+    protected $attributes = [
+        'status' => 'pending',
+    ];
 
     protected $fillable = [
         'employee_id',
@@ -32,6 +37,7 @@ class Overtime extends Model
         'holiday',
         'overday',
         'approved_by_id',
+        'status',
         'description',
     ];
 
@@ -41,6 +47,7 @@ class Overtime extends Model
         'calculated_value' => 'float',
         'holiday' => 'boolean',
         'overday' => 'boolean',
+        'status' => ApprovalStatus::class,
     ];
 
     public function employee(): BelongsTo
@@ -71,5 +78,10 @@ class Overtime extends Model
     public function getApprovedByNameAttribute(): ?string
     {
         return $this->approvedBy?->display;
+    }
+
+    public function getStatusLabelAttribute(): ?string
+    {
+        return $this->status?->label();
     }
 }

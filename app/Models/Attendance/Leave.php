@@ -2,6 +2,7 @@
 
 namespace App\Models\Attendance;
 
+use App\Enums\ApprovalStatus;
 use App\Models\Employee\Employee;
 use App\Models\Master\Reason;
 use App\Support\Concerns\Blameable;
@@ -12,9 +13,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Leave extends Model
 {
+    use Blameable;
     use HasUuids;
     use SoftDeletes;
-    use Blameable;
 
     protected $table = 'leaves';
 
@@ -22,17 +23,24 @@ class Leave extends Model
 
     public $incrementing = false;
 
+    protected $attributes = [
+        'status' => 'pending',
+    ];
+
     protected $fillable = [
         'employee_id',
         'leave_date',
         'reason_id',
         'amount',
         'description',
+        'status',
+        'approved_by_id',
     ];
 
     protected $casts = [
         'leave_date' => 'date',
         'amount' => 'integer',
+        'status' => ApprovalStatus::class,
     ];
 
     public function employee(): BelongsTo
@@ -45,6 +53,11 @@ class Leave extends Model
         return $this->belongsTo(Reason::class);
     }
 
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'approved_by_id');
+    }
+
     public function getEmployeeNameAttribute(): ?string
     {
         return $this->employee?->display;
@@ -53,5 +66,15 @@ class Leave extends Model
     public function getReasonNameAttribute(): ?string
     {
         return $this->reason?->name;
+    }
+
+    public function getStatusLabelAttribute(): ?string
+    {
+        return $this->status?->label();
+    }
+
+    public function getApprovedByNameAttribute(): ?string
+    {
+        return $this->approvedBy?->display;
     }
 }

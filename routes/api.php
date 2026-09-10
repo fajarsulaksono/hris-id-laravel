@@ -14,7 +14,7 @@ Route::prefix('v1')->group(function () {
 
         foreach (ApiModules::all() as $key => $module) {
             $viewAbility = $module['ability'];
-            $manageAbility = str_replace('view_', 'manage_', $viewAbility);
+            $manageAbility = $module['write_ability'] ?? str_replace('view_', 'manage_', $viewAbility);
 
             Route::middleware("apiRole:{$viewAbility}")->prefix($key)->group(function () use ($key, $manageAbility) {
                 Route::get('/', [ApiController::class, 'index'])->defaults('module', $key)->name("api.{$key}.index");

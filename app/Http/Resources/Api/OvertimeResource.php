@@ -24,6 +24,8 @@ class OvertimeResource extends JsonResource
             'overday' => $this->overday,
             'approved_by_id' => $this->approved_by_id,
             'approved_by' => $this->whenLoaded('approvedBy', fn () => new EmployeeResource($this->approvedBy)),
+            'status' => $this->status?->value,
+            'status_label' => $this->status?->label(),
             'description' => $this->description,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
