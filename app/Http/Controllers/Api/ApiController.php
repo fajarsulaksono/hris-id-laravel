@@ -96,6 +96,7 @@ class ApiController extends Controller
         $data = $this->applySelfService($module, $request, $data);
 
         $model = $this->findOwned($module, $request, $id);
+        $this->guardSelfReopen($module, $model, $data);
         $this->assign($model, $data);
         $model->save();
 
@@ -211,6 +212,23 @@ class ApiController extends Controller
             ->exists();
 
         abort_if($duplicate, 422, "Duplicate [{$column}] for this employee.");
+    }
+
+    /**
+     * Modul self-service: tolak pengisian ulang kolom waktu pulang saat
+     * sudah tercatat (mencegah clock-out ganda dari perangkat lain).
+     */
+    protected function guardSelfReopen(array $module, Model $model, array $data): void
+    {
+        if (! ($module['self_service'] ?? false) || ! isset($data['check_out'])) {
+            return;
+        }
+
+        $current = $model->getAttributes()['check_out'] ?? null;
+
+        if ($current !== null) {
+            abort(422, 'Check-out sudah dicatat.');
+        }
     }
 
     /**

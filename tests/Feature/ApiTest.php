@@ -326,6 +326,23 @@ class ApiTest extends TestCase
             ->assertJsonPath('data.check_out', '17:00');
     }
 
+    public function test_employee_cannot_clock_out_twice(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $attendance = Attendance::create([
+            'employee_id' => $employee->getKey(),
+            'attendance_date' => '2026-09-01',
+            'check_in' => '08:00:00',
+            'check_out' => '17:00:00',
+        ]);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->putJson("/api/v1/attendances/{$attendance->getKey()}", ['check_out' => '18:00'])
+            ->assertUnprocessable()
+            ->assertJson(['message' => 'Check-out sudah dicatat.']);
+    }
+
     private function employee(string $username, string $role): Employee
     {
         $sequence = ++$this->sequence;
