@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class ApiController extends Controller
@@ -74,6 +75,10 @@ class ApiController extends Controller
         abort_unless($module['mutable'], 403);
 
         $data = $request->validate($module['rules']);
+        $data = $this->normalizeTimeFields($data);
+        $data = $this->applySelfService($module, $request, $data);
+        $this->guardSelfUniqueConflict($module, $request, $data);
+
         $model = new $module['model'];
         $this->assign($model, $data);
         $model->save();
@@ -86,8 +91,11 @@ class ApiController extends Controller
         $module = $this->moduleOrAbort((string) $request->route('module'));
         abort_unless($module['mutable'], 403);
 
-        $data = $request->validate($module['rules']);
-        $model = $module['model']::findOrFail($id);
+        $data = $request->validate($module['update_rules'] ?: $module['rules']);
+        $data = $this->normalizeTimeFields($data);
+        $data = $this->applySelfService($module, $request, $data);
+
+        $model = $this->findOwned($module, $request, $id);
         $this->assign($model, $data);
         $model->save();
 
@@ -99,7 +107,7 @@ class ApiController extends Controller
         $module = $this->moduleOrAbort((string) $request->route('module'));
         abort_unless($module['mutable'], 403);
 
-        $module['model']::findOrFail($id)->delete();
+        $this->findOwned($module, $request, $id)->delete();
 
         return response()->json(['message' => 'Deleted.']);
     }
@@ -117,6 +125,10 @@ class ApiController extends Controller
 
         if ($module['scope'] !== null && $user !== null) {
             ($module['scope'])($query, $user);
+        }
+
+        if ($this->selfScoped($module, $user)) {
+            $query->where('employee_id', $user->getKey());
         }
 
         return $query;
@@ -146,6 +158,89 @@ class ApiController extends Controller
         abort_if($module === null, 404, "Module [{$key}] not found.");
 
         return $module;
+    }
+
+    /**
+     * Modul self-service: pengguna non-privileged hanya bisa menyentuh
+     * record miliknya sendiri. Yang punya ability `managed_by` (mis. admin)
+     * melihat scope perusahaan penuh.
+     */
+    protected function selfScoped(array $module, ?Employee $user): bool
+    {
+        if (! ($module['self_service'] ?? false) || $user === null || $user->hasRole('SUPER_ADMIN')) {
+            return false;
+        }
+
+        $managedBy = $module['managed_by'] ?? null;
+
+        if ($managedBy !== null && $this->security->can($user, $managedBy)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Pada modul self-service, `employee_id` selalu diambil dari token,
+     * bukan dari body, sehingga karyawan tak bisa memalsukan milik orang lain.
+     */
+    protected function applySelfService(array $module, Request $request, array $data): array
+    {
+        if (($module['self_service'] ?? false) && $request->user() !== null) {
+            $data['employee_id'] = $request->user()->getKey();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Tolak duplikat pada kolom `self_unique` per karyawan (mis. absen
+     * tanggal sama) untuk mencegah clock-in ganda.
+     */
+    protected function guardSelfUniqueConflict(array $module, Request $request, array $data): void
+    {
+        $column = $module['self_unique'] ?? null;
+
+        if ($column === null || ! isset($data[$column])) {
+            return;
+        }
+
+        $duplicate = $module['model']::query()
+            ->whereDate($column, $data[$column])
+            ->when($data['employee_id'] ?? null, fn (Builder $query, $employeeId) => $query->where('employee_id', $employeeId))
+            ->exists();
+
+        abort_if($duplicate, 422, "Duplicate [{$column}] for this employee.");
+    }
+
+    /**
+     * Normalisasi kolom waktu agar konsisten antar DB (SQLite menyimpan
+     * apa adanya, MySQL menormalisasi ke HH:MM:SS). Pakai format HH:MM.
+     */
+    protected function normalizeTimeFields(array $data): array
+    {
+        foreach (['check_in', 'check_out'] as $field) {
+            if (! empty($data[$field])) {
+                $data[$field] = Carbon::parse((string) $data[$field])->format('H:i');
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Temukan model; pada modul self-service, non-privileged hanya boleh
+     * mengambil record miliknya sendiri.
+     */
+    protected function findOwned(array $module, Request $request, string $id): Model
+    {
+        $query = $module['model']::query();
+
+        if ($this->selfScoped($module, $request->user())) {
+            $query->where('employee_id', $request->user()->getKey());
+        }
+
+        return $query->findOrFail($id);
     }
 
     /**

@@ -247,10 +247,32 @@ final class ApiModules
                 title: 'Kehadiran',
                 model: Attendance::class,
                 resource: AttendanceResource::class,
-                ability: 'view_attendance',
+                ability: 'view_my_attendance',
                 order: ['attendance_date', 'desc'],
                 with: ['employee', 'shiftment', 'reason'],
                 scope: self::viaEmployeeCompanyScope(),
+                mutable: true,
+                rules: [
+                    'attendance_date' => ['required', 'date'],
+                    'check_in' => ['nullable'],
+                    'check_out' => ['nullable'],
+                    'absent' => ['nullable', 'boolean'],
+                    'description' => ['nullable', 'string', 'max:255'],
+                    'shiftment_id' => ['nullable', 'exists:shiftments,id'],
+                    'reason_id' => ['nullable', 'exists:absent_reasons,id'],
+                ],
+                update_rules: [
+                    'attendance_date' => ['nullable', 'date'],
+                    'check_in' => ['nullable'],
+                    'check_out' => ['nullable'],
+                    'absent' => ['nullable', 'boolean'],
+                    'description' => ['nullable', 'string', 'max:255'],
+                    'shiftment_id' => ['nullable', 'exists:shiftments,id'],
+                    'reason_id' => ['nullable', 'exists:absent_reasons,id'],
+                ],
+                self_service: true,
+                self_unique: 'attendance_date',
+                managed_by: 'view_attendance',
             ),
 
             'attendance-summaries' => self::module(
@@ -427,7 +449,11 @@ final class ApiModules
         array $with = [],
         bool $mutable = false,
         array $rules = [],
+        array $update_rules = [],
         ?callable $scope = null,
+        bool $self_service = false,
+        ?string $self_unique = null,
+        ?string $managed_by = null,
     ): array {
         return [
             'title' => $title,
@@ -439,7 +465,11 @@ final class ApiModules
             'with' => $with,
             'mutable' => $mutable,
             'rules' => $rules,
+            'update_rules' => $update_rules,
             'scope' => $scope,
+            'self_service' => $self_service,
+            'self_unique' => $self_unique,
+            'managed_by' => $managed_by,
         ];
     }
 }

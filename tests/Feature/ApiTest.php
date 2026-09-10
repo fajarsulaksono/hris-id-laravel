@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Attendance\Attendance;
 use App\Models\Company\Company;
 use App\Models\Company\JobLevel;
 use App\Models\Company\JobTitle;
@@ -214,6 +215,115 @@ class ApiTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.name', 'SENIOR MANAGER');
+    }
+
+    public function test_employee_can_clock_in_self_attendance(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/attendances', [
+                'attendance_date' => '2026-09-01',
+                'check_in' => '08:00',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.employee_id', $employee->getKey())
+            ->assertJsonPath('data.check_in', '08:00');
+    }
+
+    public function test_employee_cannot_clock_in_twice_on_same_day(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $payload = ['attendance_date' => '2026-09-01', 'check_in' => '08:00'];
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/attendances', $payload)
+            ->assertCreated();
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/attendances', $payload)
+            ->assertUnprocessable();
+    }
+
+    public function test_employee_clock_in_always_uses_token_employee(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $other = $this->employee('sinta.dewi', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/attendances', [
+                'employee_id' => $other->getKey(),
+                'attendance_date' => '2026-09-01',
+                'check_in' => '08:00',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.employee_id', $employee->getKey());
+    }
+
+    public function test_employee_only_sees_own_attendances(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $other = $this->employee('sinta.dewi', 'EMPLOYEE');
+        $token = $this->tokenFor($employee);
+
+        Attendance::create(['employee_id' => $employee->getKey(), 'attendance_date' => '2026-09-01', 'check_in' => '08:00:00']);
+        Attendance::create(['employee_id' => $other->getKey(), 'attendance_date' => '2026-09-02', 'check_in' => '08:00:00']);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/attendances')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.employee_id', $employee->getKey());
+    }
+
+    public function test_hr_staff_sees_all_company_attendances(): void
+    {
+        $company = Company::create(['code' => 'PT-A', 'name' => 'PT A', 'birth_day' => '1990-01-01', 'email' => 'a@test.id', 'tax_number' => '00.000.000.0-000.000']);
+
+        $staff = $this->employee('sari.wulandari', 'HRSTAFF');
+        $staff->update(['company_id' => $company->getKey()]);
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $employee->update(['company_id' => $company->getKey()]);
+        $other = $this->employee('sinta.dewi', 'EMPLOYEE');
+        $other->update(['company_id' => $company->getKey()]);
+
+        Attendance::create(['employee_id' => $employee->getKey(), 'attendance_date' => '2026-09-01', 'check_in' => '08:00:00']);
+        Attendance::create(['employee_id' => $other->getKey(), 'attendance_date' => '2026-09-02', 'check_in' => '08:00:00']);
+
+        $token = $this->tokenFor($staff->fresh());
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/attendances')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 2);
+    }
+
+    public function test_employee_cannot_modify_other_attendance(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $other = $this->employee('sinta.dewi', 'EMPLOYEE');
+        $attendance = Attendance::create(['employee_id' => $other->getKey(), 'attendance_date' => '2026-09-02', 'check_in' => '08:00:00']);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->putJson("/api/v1/attendances/{$attendance->getKey()}", ['check_out' => '17:00:00'])
+            ->assertNotFound();
+    }
+
+    public function test_employee_can_clock_out_own_attendance(): void
+    {
+        $employee = $this->employee('budi.santoso', 'EMPLOYEE');
+        $attendance = Attendance::create(['employee_id' => $employee->getKey(), 'attendance_date' => '2026-09-01', 'check_in' => '08:00:00']);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->putJson("/api/v1/attendances/{$attendance->getKey()}", ['check_out' => '17:00'])
+            ->assertOk()
+            ->assertJsonPath('data.check_out', '17:00');
     }
 
     private function employee(string $username, string $role): Employee
