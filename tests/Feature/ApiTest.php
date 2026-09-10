@@ -12,6 +12,8 @@ use App\Models\Company\JobTitle;
 use App\Models\Employee\Employee;
 use App\Models\Master\Holiday;
 use App\Models\Master\Reason;
+use App\Models\Payroll\Payroll;
+use App\Models\Payroll\PayrollPeriod;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -102,6 +104,26 @@ class ApiTest extends TestCase
         $this->withHeaders(['Authorization' => "Bearer {$token}"])
             ->getJson('/api/v1/payroll-periods')
             ->assertOk();
+    }
+
+    public function test_payroll_api_only_returns_the_authenticated_employee_payslip(): void
+    {
+        $employee = $this->employee('budi.santoso', 'HRSUPERVISOR');
+        $other = $this->employee('sinta.dewi', 'HRSUPERVISOR');
+        $period = PayrollPeriod::create([
+            'company_id' => $employee->company_id,
+            'year' => 2026,
+            'month' => 9,
+        ]);
+        Payroll::create(['employee_id' => $employee->getKey(), 'period_id' => $period->getKey()]);
+        Payroll::create(['employee_id' => $other->getKey(), 'period_id' => $period->getKey()]);
+        $token = $this->tokenFor($employee);
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/payrolls')
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.employee_id', $employee->getKey());
     }
 
     public function test_search_filters_employees_by_q(): void

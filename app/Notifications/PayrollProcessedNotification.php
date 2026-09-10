@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Payroll\Payroll;
+use App\Notifications\Channels\FcmChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -18,7 +19,35 @@ class PayrollProcessedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database', FcmChannel::class];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'type' => 'payroll_processed',
+            'title' => 'Slip Gaji Tersedia',
+            'message' => 'Slip gaji periode '.($this->payroll->period?->display ?? '-').' telah tersedia.',
+            'related_id' => $this->payroll->getKey(),
+        ];
+    }
+
+    /**
+     * @return array{title: string, body: string, data: array<string, string>}
+     */
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => 'Slip Gaji Tersedia',
+            'body' => 'Slip gaji periode '.($this->payroll->period?->display ?? '-').' telah tersedia.',
+            'data' => [
+                'type' => 'payroll_processed',
+                'related_id' => (string) $this->payroll->getKey(),
+            ],
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DeviceTokenController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Support\ApiModules;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +13,12 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('auth/logout', [AuthController::class, 'logout']);
         Route::get('auth/me', [AuthController::class, 'me']);
+        Route::post('auth/device', [DeviceTokenController::class, 'store']);
+        Route::delete('auth/device/{id}', [DeviceTokenController::class, 'destroy']);
+        Route::middleware('apiRole:view_notification')->prefix('notifications')->group(function (): void {
+            Route::get('/', [NotificationController::class, 'index'])->name('api.notifications.index');
+            Route::put('{id}/read', [NotificationController::class, 'markRead'])->name('api.notifications.read');
+        });
 
         foreach (ApiModules::all() as $key => $module) {
             $viewAbility = $module['ability'];

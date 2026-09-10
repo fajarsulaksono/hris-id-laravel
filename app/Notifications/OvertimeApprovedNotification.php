@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Attendance\Overtime;
+use App\Notifications\Channels\FcmChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -18,7 +19,35 @@ class OvertimeApprovedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database', FcmChannel::class];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'type' => 'overtime_approved',
+            'title' => 'Lembur Disetujui',
+            'message' => 'Pengajuan lembur Anda telah disetujui.',
+            'related_id' => $this->overtime->getKey(),
+        ];
+    }
+
+    /**
+     * @return array{title: string, body: string, data: array<string, string>}
+     */
+    public function toFcm(object $notifiable): array
+    {
+        return [
+            'title' => 'Lembur Disetujui',
+            'body' => 'Pengajuan lembur Anda telah disetujui.',
+            'data' => [
+                'type' => 'overtime_approved',
+                'related_id' => (string) $this->overtime->getKey(),
+            ],
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage

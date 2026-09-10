@@ -364,7 +364,7 @@ final class ApiModules
                 ability: 'view_payroll',
                 order: ['created_at', 'desc'],
                 with: ['employee', 'period', 'details'],
-                scope: self::viaEmployeeCompanyScope(),
+                scope: self::viaEmployeeSelfScope(),
             ),
 
             'salary-components' => self::module(
@@ -464,6 +464,20 @@ final class ApiModules
             }
 
             $query->whereHas('employee', fn ($builder) => $builder->where('company_id', $user->company_id));
+        };
+    }
+
+    /**
+     * Scope payroll API ke payslip employee yang sedang login.
+     */
+    private static function viaEmployeeSelfScope(): callable
+    {
+        return static function ($query, Employee $user): void {
+            if ($user->hasRole('SUPER_ADMIN')) {
+                return;
+            }
+
+            $query->where('employee_id', $user->getKey());
         };
     }
 

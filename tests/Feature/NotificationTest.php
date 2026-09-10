@@ -143,6 +143,63 @@ class NotificationTest extends TestCase
         Notification::assertSentTo($employee, PayrollProcessedNotification::class);
     }
 
+    public function test_employee_can_list_and_mark_own_notification_as_read(): void
+    {
+        $employee = $this->employee('INBOX');
+        $other = $this->employee('OTHER');
+        Notification::send($employee, new OvertimeApprovedNotification(
+            Overtime::create([
+                'employee_id' => $employee->getKey(),
+                'overtime_date' => '2026-09-10',
+                'start_hour' => '18:00',
+                'end_hour' => '20:00',
+            ]),
+        ));
+        Notification::send($other, new OvertimeApprovedNotification(
+            Overtime::create([
+                'employee_id' => $other->getKey(),
+                'overtime_date' => '2026-09-11',
+                'start_hour' => '18:00',
+                'end_hour' => '20:00',
+            ]),
+        ));
+        $token = $this->tokenFor($employee);
+
+        $response = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->getJson('/api/v1/notifications')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $notificationId = $response->json('data.0.id');
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->putJson("/api/v1/notifications/{$notificationId}/read")
+            ->assertOk()
+            ->assertJsonPath('data.is_read', true);
+    }
+
+    public function test_employee_can_register_and_remove_own_device_token(): void
+    {
+        $employee = $this->employee('DEVICE');
+        $token = $this->tokenFor($employee);
+
+        $response = $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->postJson('/api/v1/auth/device', [
+                'token' => 'fcm-token-device',
+                'platform' => 'android',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.platform', 'android');
+
+        $deviceId = $response->json('data.id');
+
+        $this->withHeaders(['Authorization' => "Bearer {$token}"])
+            ->deleteJson("/api/v1/auth/device/{$deviceId}")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('device_tokens', ['id' => $deviceId]);
+    }
+
     private function employee(string $suffix = 'BUDI'): Employee
     {
         $identity = '317401250990'.str_pad((string) (abs(crc32($suffix)) % 90 + 10), 2, '0', STR_PAD_LEFT);
@@ -158,5 +215,10 @@ class NotificationTest extends TestCase
             'identity_number' => $identity,
             'have_overtime_benefit' => true,
         ]);
+    }
+
+    private function tokenFor(Employee $employee): string
+    {
+        return $employee->createToken('test')->plainTextToken;
     }
 }
